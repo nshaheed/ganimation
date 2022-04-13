@@ -1,3 +1,4 @@
+import asyncio
 import torch
 import matplotlib.pyplot as plt
 import torchvision
@@ -77,21 +78,13 @@ ip = "127.0.0.1"
 port = 5005
 
 ###### OpenGL stuff ######
-def main() -> None:
+async def main() -> None:
 
     # trained on high-quality celebrity faces "celebA" dataset
     # this model outputs 512 x 512 pixel images
     model = torch.hub.load('facebookresearch/pytorch_GAN_zoo:hub',
                            'PGAN', model_name='celebAHQ-512',
                            pretrained=True, useGPU=use_gpu)
-
-
-    dispatch = dispatcher.Dispatcher()
-    dispatch.map("/face", random_face)
-
-    x = threading.Thread(target=run_server, args=[dispatch])
-    x.start()
-    print("past server start")
 
     # initialize glfw
     if not glfw.init():
@@ -186,9 +179,9 @@ def main() -> None:
 
         print("generate image: {}".format(end-start))
 
-        print(generated_images.shape)
-        print(type(generated_images))
-        print(generated_images.dtype)
+        # print(generated_images.shape)
+        # print(type(generated_images))
+        # print(generated_images.dtype)
 
         # let's plot these images using torchvision and matplotlib
         # start = time.time()
@@ -238,7 +231,21 @@ def main() -> None:
 
         glfw.swap_buffers(window)
 
+
     glfw.terminate()
 
+async def init_main():
+    dispatch = dispatcher.Dispatcher()
+    dispatch.map("/face", random_face)
+
+    server = osc_server.AsyncIOOSCUDPServer((ip, port), dispatch, asyncio.get_event_loop())
+    transport, protocol = await server.create_serve_endpoint()  # Create datagram endpoint and start serving
+
+    print("past server start")
+
+    await main()
+
+    transport.close()
+
 if __name__ == "__main__":
-    main()
+    asyncio.run(init_main())
