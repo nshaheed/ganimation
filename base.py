@@ -127,16 +127,30 @@ def main() -> None:
 
     texture = glGenTextures(1)
 
+
+    frameCount = 0
+    lastTime = glfw.get_time()
+
     while not glfw.window_should_close(window):
         glfw.poll_events()
+
+        # currentTime = glfw.get_time()
+        # frameCount += 1
+
+        # if (currentTime - lastTime >= 1.0):
+        #     print("{} ms/frame".format(1000.0/frameCount))
+        #     frameCount = 0
+        #     lastTime = currentTime
 
         with torch.no_grad():
             global noise
             generated_images = model.test(noise) # generate image from curr noise
             generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
-            generated_images = np.asarray(generated_images).transpose() # channels should be last
-            generated_images = np.rot90(generated_images) # wrong orientation
-            generated_images = np.interp(generated_images, (-1.0, 1.0), (0.0, 1.0)) # opengl expects (0,1) range
+            generated_images = generated_images.transpose(0, 2) # the channel dim should be last
+            generated_images = generated_images.rot90(1,[0,1]) # image needs to be rotate for some reason
+            generated_images = torch.add(generated_images, 1) # scale the image: (-1,1) -> (0,1)
+            generated_images = torch.div(generated_images, 2)
+            generated_images = np.asarray(generated_images) # convert to numpy array to feed to texture
 
 
         glBindTexture(GL_TEXTURE_2D, texture)
@@ -154,7 +168,6 @@ def main() -> None:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
 
         glfw.swap_buffers(window)
-
 
     glfw.terminate()
 
