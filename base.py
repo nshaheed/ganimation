@@ -35,23 +35,7 @@ def run_server(dispatch):
     print("Serving on {}".format(server.server_address))
     server.serve_forever()
 
-
-# figure, ax = plt.subplots()
-# print("ax", ax)
-
-# plt.ion()
-# plt.show()
-
 num_images = 1
-
-# # matplotlib draw loop
-# while True:
-#     plt.show()
-
-#     figure.canvas.draw()
-#     figure.canvas.flush_events()
-        
-#     time.sleep(0.042) # 24 fps
 
 ip = "127.0.0.1"
 port = 5005
@@ -73,10 +57,10 @@ def main() -> None:
 
     glfw.make_context_current(window)
     #           positions    colors          texture coords
-    quad = [   -1, -1, 0.0,  0.0, 0.0, 0.0,  0.0, 0.0,
-                1, -1, 0.0,  0.0, 0.0, 0.0,  1.0, 0.0,
-                1,  1, 0.0,  0.0, 0.0, 0.0,  1.0, 1.0,
-               -1,  1, 0.0,  0.0, 0.0, 0.0,  0.0, 1.0]
+    quad = [   -1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+               -1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
 
     quad = np.array(quad, dtype = np.float32)
 
@@ -139,40 +123,19 @@ def main() -> None:
 
     glUseProgram(shader)
 
-    glClearColor(0.2, 0.3, 0.2, 1.0)
+    glClearColor(1, 1, 1, 1.0)
 
     texture = glGenTextures(1)
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
 
-
-        # start = time.time()
-        # noise, _ = model.buildNoiseData(num_images)
-        # end = time.time()
-
-        # print("build noise data: {0:.3g}s".format(end-start))
-
-        # with torch.no_grad():
-        #     start = time.time()
-        #     generated_images = model.test(noise)
-        #     generated_images = generated_images[0]
-        #     generated_images = np.asarray(generated_images).transpose()
-        #     generated_images = np.rot90(generated_images)
-        #     end = time.time()
-
-        #     print("generate image: {0:.3g}s".format(end-start))
-        # start = time.time()
         with torch.no_grad():
             global noise
             generated_images = model.test(noise)
             generated_images = generated_images[0]
             generated_images = np.asarray(generated_images).transpose()
             generated_images = np.rot90(generated_images)
-
-
-        # end = time.time()
-        # print("generate image: {0:.3g}s".format(end-start))
 
 
         glBindTexture(GL_TEXTURE_2D, texture)
@@ -183,14 +146,7 @@ def main() -> None:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        # image = Image.open("img.png")
-        #img_data = np.array(list(image.getdata()), np.uint8)
-        # flipped_image = image.transpose(Image.FLIP_TOP_BOTTOM)
-        # img_data = flipped_image.convert("RGBA").tobytes()
-        # glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_FLOAT, generated_images)
-        #print(image.width, image.height)
-        
 
         glClear(GL_COLOR_BUFFER_BIT)
 
@@ -213,10 +169,6 @@ def init_main():
     global noise
     noise, _ = model.buildNoiseData(num_images)
 
-
-    # for i in range(10):
-    #     random_face('jfldks')
-    #     time.sleep(5)
 
     dispatch = dispatcher.Dispatcher()
     dispatch.map("/face", random_face)
