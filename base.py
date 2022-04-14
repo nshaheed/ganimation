@@ -132,10 +132,11 @@ def main() -> None:
 
         with torch.no_grad():
             global noise
-            generated_images = model.test(noise)
-            generated_images = generated_images[0]
-            generated_images = np.asarray(generated_images).transpose()
-            generated_images = np.rot90(generated_images)
+            generated_images = model.test(noise) # generate image from curr noise
+            generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
+            generated_images = np.asarray(generated_images).transpose() # channels should be last
+            generated_images = np.rot90(generated_images) # wrong orientation
+            generated_images = np.interp(generated_images, (-1.0, 1.0), (0.0, 1.0)) # opengl expects (0,1) range
 
 
         glBindTexture(GL_TEXTURE_2D, texture)
