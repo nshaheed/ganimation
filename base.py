@@ -22,12 +22,8 @@ use_gpu = True if torch.cuda.is_available() else False
 def random_face(addr: str, *args) -> None:
     # print("[{0}] ~ {1}".format(addr, args))
 
-    # start = time.time()
-    global noise
-    noise, _ = model.buildNoiseData(num_images)
-    # end = time.time()
-
-    # print("build noise data: {0:.3g}s".format(end-start))
+    global model
+    model.replace_noise(0)
 
 def run_server(dispatch):
     server = osc_server.ThreadingOSCUDPServer(
@@ -42,6 +38,52 @@ port = 5005
 
 model = None
 noise = None
+
+## TODO abstract this to allow for subclasses for different models (stylegan, pgan, w/e)
+class Model:
+
+    model = None
+    use_gpu = None
+
+    id_counter = 0
+    noise = {}
+
+    def __init__(self):
+        self.use_gpu = True if torch.cuda.is_available() else False
+
+        # trained on high-quality celebrity faces "celebA" dataset
+        # this model outputs 512 x 512 pixel images
+        self.model = torch.hub.load('facebookresearch/pytorch_GAN_zoo:hub',
+                               'PGAN', model_name='celebAHQ-512',
+                               pretrained=True, useGPU=use_gpu)
+
+    def generate_noise(self):
+        noise, _ = self.model.buildNoiseData(1)
+        return noise
+
+    def make_noise(self) -> int:
+        """ Make a new noise and add to noise collection. """
+        id = self.id_counter
+        self.noise[id] = self.generate_noise()
+
+        # make sure each id is unique
+        self.id_counter += 1
+        print("noise shape: ", self.noise[id].shape)
+
+        return id
+
+    def replace_noise(self, id: int, source_id=None) -> None:
+        """ Replace noise at id with a new random noise. """
+        self.noise[id] = self.generate_noise()
+
+        # TODO: add case for when source_id is not None
+
+    def make_image(self, id):
+        """ Use a noise to generate an image. """
+        # print("noise ", self.noise)
+        curr_noise = self.noise[id]
+        result = self.model.test(curr_noise)
+        return result
 
 ###### OpenGL stuff ######
 def main() -> None:
@@ -144,7 +186,8 @@ def main() -> None:
 
         with torch.no_grad():
             global noise
-            generated_images = model.test(noise) # generate image from curr noise
+            # generated_images = model.test(noise) # generate image from curr noise
+            generated_images = model.make_image(0)
             generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
             generated_images = generated_images.transpose(0, 2) # the channel dim should be last
             generated_images = generated_images.rot90(1,[0,1]) # image needs to be rotate for some reason
@@ -171,18 +214,13 @@ def main() -> None:
 
     glfw.terminate()
 
+model = Model()
+model.generate_noise()
+
 # init_main sets up all the osc/opengl coroutines and closes things properly
 def init_main():
-    # trained on high-quality celebrity faces "celebA" dataset
-    # this model outputs 512 x 512 pixel images
     global model
-    model = torch.hub.load('facebookresearch/pytorch_GAN_zoo:hub',
-                           'PGAN', model_name='celebAHQ-512',
-                           pretrained=True, useGPU=use_gpu)
-
-    global noise
-    noise, _ = model.buildNoiseData(num_images)
-
+    model.make_noise()
 
     dispatch = dispatcher.Dispatcher()
     dispatch.map("/face", random_face)
