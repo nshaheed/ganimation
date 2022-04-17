@@ -1,9 +1,9 @@
-import asyncio
 import torch
 import matplotlib.pyplot as plt
 import torchvision
 import time
 import threading
+import logging
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -20,10 +20,23 @@ import time
 use_gpu = True if torch.cuda.is_available() else False
 
 def random_face(addr: str, *args) -> None:
-    # print("[{0}] ~ {1}".format(addr, args))
+    logging.debug(f'{addr=}')
 
     global model
     model.replace_noise(0)
+
+def make_noise(addr: str, *args) -> None:
+    logging.debug(f'{addr=}')
+
+    global model
+    model.make_noise()
+
+# def interpolate(addr: str, fixed_argument: List[Any], *osc_arguments: List[Any]) -> None:
+def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
+    logging.debug(f'{addr=}, {source_id=}, {left_id=}, {right_id=}, {interp=}')
+
+    global model
+    model.interpolate(source_id, left_id, right_id, interp)
 
 def run_server(dispatch):
     server = osc_server.ThreadingOSCUDPServer(
@@ -41,15 +54,15 @@ noise = None
 
 ## TODO abstract this to allow for subclasses for different models (stylegan, pgan, w/e)
 class Model:
-
     model = None
     use_gpu = None
 
     id_counter = 0
-    noise = {}
+    noise = None
 
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
+        self.noise = {}
 
         # trained on high-quality celebrity faces "celebA" dataset
         # this model outputs 512 x 512 pixel images
@@ -84,6 +97,10 @@ class Model:
         curr_noise = self.noise[id]
         result = self.model.test(curr_noise)
         return result
+
+    def interpolate(self, source_id: int, left_id: int, right_id: int, interp: float) -> None:
+        """ Linear interpolation between left and right noise. """
+        self.noise[source_id] = self.noise[left_id] * interp + self.noise[right_id] * (1.0 - interp)
 
 ###### OpenGL stuff ######
 def main() -> None:
@@ -219,11 +236,19 @@ model.generate_noise()
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
 def init_main():
+    # set up logging
+    level = logging.DEBUG
+    fmt = '[%(levelname)s] %(asctime)s - %(message)s'
+    logging.basicConfig(level=level, format=fmt)
+
+    # set up model (TODO handle multiple models)
     global model
     model.make_noise()
 
     dispatch = dispatcher.Dispatcher()
     dispatch.map("/face", random_face)
+    dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
+    dispatch.map("/make_noise", make_noise)
 
     server = osc_server.ThreadingOSCUDPServer(
         (ip, port), dispatch)

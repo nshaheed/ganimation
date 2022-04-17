@@ -1,8 +1,4 @@
-//----------------------------------------------------------------------------
-// name: s.ck ('s' is "sender")
-// desc: OpenSoundControl (OSC) sender example
-// note: launch with r.ck (that's the receiver)
-//----------------------------------------------------------------------------
+// Randomly generate faces to the beat of blit
 
 // destination host name
 "localhost" => string hostname;
