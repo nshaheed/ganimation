@@ -19,11 +19,11 @@ import time
 
 use_gpu = True if torch.cuda.is_available() else False
 
-def random_face(addr: str, *args) -> None:
-    logging.debug(f'{addr=}')
+def random_face(addr: str, args, id: int) -> None:
+    logging.debug(f'{addr=}, {id=}')
 
     global model
-    model.replace_noise(0)
+    model.replace_noise(id)
 
 def make_noise(addr: str, *args) -> None:
     logging.debug(f'{addr=}')
@@ -246,7 +246,7 @@ def init_main():
     model.make_noise()
 
     dispatch = dispatcher.Dispatcher()
-    dispatch.map("/face", random_face)
+    dispatch.map("/face", random_face, "id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_noise", make_noise)
 

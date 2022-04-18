@@ -16,7 +16,8 @@ OscOut xmit;
 xmit.dest( hostname, port );
 
 Blit s => JCRev r => dac;
-.5 => s.gain;
+// .5 => s.gain;
+.1 => s.gain;
 .05 => r.mix;
 
 // an array
@@ -28,15 +29,13 @@ xmit.send();
 xmit.start( "/make_noise" );
 xmit.send();
 
-0.0 => float interp;
-
 -1.0 => float prevFreq;
 // infinite time loop
 while( true )
 {
     // start the message...
     xmit.start( "/face" );
-    
+    0 => xmit.add;
     // send it
     xmit.send();
 
@@ -52,14 +51,29 @@ while( true )
     
     Math.randomf() => float chance;
 		if (chance > 0.95) {
+				updateSide();
 				interpolate_step(360::ms);
     }
     else if (chance > 0.25) {
         120::ms => now;
     } else {
-        240::ms => now;
-    }
-		0.01 +=> interp;
+				updateSide();
+				interpolate_step(180::ms);
+        (240-180)::ms => now;
+	  }
+}
+
+fun void updateSide() {
+		// start the message...
+		xmit.start( "/face" );
+		1 => xmit.add;
+		// send it
+		xmit.send();
+		// start the message...
+		xmit.start( "/face" );
+		2 => xmit.add;
+		// send it
+		xmit.send();				
 }
 
 fun void interpolate_step(dur d) {
@@ -67,7 +81,8 @@ fun void interpolate_step(dur d) {
 
 		d / framerate => float frames;
 
-		Math.random2f(0.75, 3.0) => float magnitude;
+		// Math.random2f(0.75, 3.0) => float magnitude;
+		0.5 => float magnitude;
 
 		now + d => time later;
 		0 => float count;
@@ -79,11 +94,21 @@ fun void interpolate_step(dur d) {
 				0 => xmit.add; // source
 				1 => xmit.add; // left
 				2 => xmit.add; // right
+				// Math.sqrt(intp) => xmit.add;
 				intp => xmit.add;
 
 				xmit.send();
-				1 +=> count;
-				
-				framerate => now;
+
+				if (intp < 0.1) {
+						<<< 2 >>>;
+						2 +=> count;
+						2*framerate => now;
+						// framerate => now;
+				} else {
+						<<< 1 >>>;
+						1 +=> count;
+						// 2*framerate => now;
+						framerate => now;
+				}
 		}
 }
