@@ -83,7 +83,7 @@ class Model:
 
         # make sure each id is unique
         self.id_counter += 1
-        logging.debug("latent shape: ", self.latent[id].shape)
+        logging.debug(f'latent shape: {self.latent[id].shape}')
 
         return id
 
@@ -202,6 +202,9 @@ def main() -> None:
         #     frameCount = 0
         #     lastTime = currentTime
 
+        # temp fix until proper latent selection is added
+        if len(model.latent) == 0:
+            continue
         with torch.no_grad():
             generated_images = model.make_image(0)
             generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
@@ -243,7 +246,6 @@ def init_main():
 
     # set up model (TODO handle multiple models)
     global model
-    model.make_latent()
 
     global client
     client = SimpleUDPClient(ip, port+1)  # Create client
