@@ -74,13 +74,13 @@ while( true )
     Math.randomf() => float chance;
 		if (chance > 0.95) {
 				updateSide();
-				interpolate_step(360::ms);
+				interpolate_step(360::ms, s.harmonics());
     }
     else if (chance > 0.25) {
         120::ms => now;
     } else {
 				updateSide();
-				interpolate_step(180::ms);
+				interpolate_step(180::ms, s.harmonics());
         (240-180)::ms => now;
 	  }
 }
@@ -98,13 +98,13 @@ fun void updateSide() {
 		xmit.send();				
 }
 
-fun void interpolate_step(dur d) {
+fun void interpolate_step(dur d, int nharms) {
 		(1/24.0)::second => dur framerate;
 
 		d / framerate => float frames;
 
 		// Math.random2f(0.75, 3.0) => float magnitude;
-		0.5 => float magnitude;
+		0.5 + (nharms * 0.2) => float magnitude;
 
 		now + d => time later;
 		0 => float count;
