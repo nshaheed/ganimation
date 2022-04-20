@@ -23,15 +23,15 @@ def random_face(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
 
     global model
-    model.replace_noise(id)
+    model.replace_latent(id)
 
-def make_noise(addr: str, *args) -> None:
+def make_latent(addr: str, *args) -> None:
     logging.debug(f'{addr=}')
 
     global model
-    id = model.make_noise()
+    id = model.make_latent()
 
-    client.send_message('/make_noise/receive', id)
+    client.send_message('/make_latent/receive', id)
 
 # def interpolate(addr: str, fixed_argument: List[Any], *osc_arguments: List[Any]) -> None:
 def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
@@ -52,7 +52,7 @@ ip = "127.0.0.1"
 port = 5005
 
 model = None
-noise = None
+latent = None
 
 ## TODO abstract this to allow for subclasses for different models (stylegan, pgan, w/e)
 class Model:
@@ -60,11 +60,11 @@ class Model:
     use_gpu = None
 
     id_counter = 0
-    noise = None
+    latent = None
 
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
-        self.noise = {}
+        self.latent = {}
 
         # trained on high-quality celebrity faces "celebA" dataset
         # this model outputs 512 x 512 pixel images
@@ -76,33 +76,32 @@ class Model:
         noise, _ = self.model.buildNoiseData(1)
         return noise
 
-    def make_noise(self) -> int:
-        """ Make a new noise and add to noise collection. """
+    def make_latent(self) -> int:
+        """ Make a random latent and add to latent collection. """
         id = self.id_counter
-        self.noise[id] = self.generate_noise()
+        self.latent[id] = self.generate_noise()
 
         # make sure each id is unique
         self.id_counter += 1
-        print("noise shape: ", self.noise[id].shape)
+        logging.debug("latent shape: ", self.latent[id].shape)
 
         return id
 
-    def replace_noise(self, id: int, source_id=None) -> None:
-        """ Replace noise at id with a new random noise. """
-        self.noise[id] = self.generate_noise()
+    def replace_latent(self, id: int, source_id=None) -> None:
+        """ Replace latent at id with a new random latent. """
+        self.latent[id] = self.generate_noise()
 
         # TODO: add case for when source_id is not None
 
     def make_image(self, id):
-        """ Use a noise to generate an image. """
-        # print("noise ", self.noise)
-        curr_noise = self.noise[id]
-        result = self.model.test(curr_noise)
+        """ Use a latent to generate an image. """
+        curr_latent = self.latent[id]
+        result = self.model.test(curr_latent)
         return result
 
     def interpolate(self, source_id: int, left_id: int, right_id: int, interp: float) -> None:
-        """ Linear interpolation between left and right noise. """
-        self.noise[source_id] = self.noise[left_id] * interp + self.noise[right_id] * (1.0 - interp)
+        """ Linear interpolation between left and right latents. """
+        self.latent[source_id] = self.latent[left_id] * interp + self.latent[right_id] * (1.0 - interp)
 
 ###### OpenGL stuff ######
 def main() -> None:
@@ -204,8 +203,6 @@ def main() -> None:
         #     lastTime = currentTime
 
         with torch.no_grad():
-            global noise
-            # generated_images = model.test(noise) # generate image from curr noise
             generated_images = model.make_image(0)
             generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
             generated_images = generated_images.transpose(0, 2) # the channel dim should be last
@@ -234,7 +231,6 @@ def main() -> None:
     glfw.terminate()
 
 model = Model()
-# model.generate_noise()
 
 client = None
 
@@ -247,7 +243,7 @@ def init_main():
 
     # set up model (TODO handle multiple models)
     global model
-    model.make_noise()
+    model.make_latent()
 
     global client
     client = SimpleUDPClient(ip, port+1)  # Create client
@@ -255,7 +251,7 @@ def init_main():
     dispatch = dispatcher.Dispatcher()
     dispatch.map("/face", random_face, "id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
-    dispatch.map("/make_noise/send", make_noise)
+    dispatch.map("/make_latent/send", make_latent)
 
     server = osc_server.ThreadingOSCUDPServer(
         (ip, port), dispatch)

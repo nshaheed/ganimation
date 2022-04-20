@@ -20,7 +20,7 @@ xmit.dest( hostname, sendPort );
 OscIn oin;
 OscMsg msg;
 recvPort => oin.port;
-oin.addAddress("/make_noise/receive, i");
+oin.addAddress("/make_latent/receive, i");
 
 Blit s => JCRev r => dac;
 // .5 => s.gain;
@@ -33,7 +33,7 @@ Blit s => JCRev r => dac;
 int left;
 int right;
 
-xmit.start( "/make_noise/send" );
+xmit.start( "/make_latent/send" );
 xmit.send();
 oin => now;
 while(oin.recv(msg)) {
@@ -42,7 +42,7 @@ while(oin.recv(msg)) {
 		<<< "got left id", left >>>;
 }
 
-xmit.start( "/make_noise/send" );
+xmit.start( "/make_latent/send" );
 xmit.send();
 oin => now;
 while(oin.recv(msg)) {
