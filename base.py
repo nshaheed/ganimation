@@ -5,8 +5,8 @@ import time
 import threading
 import logging
 
-from pythonosc import dispatcher
-from pythonosc import osc_server
+from pythonosc import dispatcher, osc_server
+from pythonosc.udp_client import SimpleUDPClient
 
 import glfw
 from OpenGL.GL import *
@@ -29,7 +29,9 @@ def make_noise(addr: str, *args) -> None:
     logging.debug(f'{addr=}')
 
     global model
-    model.make_noise()
+    id = model.make_noise()
+
+    client.send_message('/make_noise/receive', id)
 
 # def interpolate(addr: str, fixed_argument: List[Any], *osc_arguments: List[Any]) -> None:
 def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
@@ -232,7 +234,9 @@ def main() -> None:
     glfw.terminate()
 
 model = Model()
-model.generate_noise()
+# model.generate_noise()
+
+client = None
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
 def init_main():
@@ -245,10 +249,13 @@ def init_main():
     global model
     model.make_noise()
 
+    global client
+    client = SimpleUDPClient(ip, port+1)  # Create client
+
     dispatch = dispatcher.Dispatcher()
     dispatch.map("/face", random_face, "id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
-    dispatch.map("/make_noise", make_noise)
+    dispatch.map("/make_noise/send", make_noise)
 
     server = osc_server.ThreadingOSCUDPServer(
         (ip, port), dispatch)

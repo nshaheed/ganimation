@@ -3,17 +3,24 @@
 // destination host name
 "localhost" => string hostname;
 // destination port number
-5005 => int port;
+5005 => int sendPort;
+5006 => int recvPort;
 
 // check command line
 if( me.args() ) me.arg(0) => hostname;
-if( me.args() > 1 ) me.arg(1) => Std.atoi => port;
+if( me.args() > 1 ) me.arg(1) => Std.atoi => sendPort;
 
 // sender object
 OscOut xmit;
 
 // aim the transmitter at destination
-xmit.dest( hostname, port );
+xmit.dest( hostname, sendPort );
+
+// reciever object
+OscIn oin;
+OscMsg msg;
+recvPort => oin.port;
+oin.addAddress("/make_noise/receive, i");
 
 Blit s => JCRev r => dac;
 // .5 => s.gain;
@@ -23,11 +30,26 @@ Blit s => JCRev r => dac;
 // an array
 [ 0, 2, 4, 7, 9, 11 ] @=> int hi[];
 
+int left;
+int right;
 
-xmit.start( "/make_noise" );
+xmit.start( "/make_noise/send" );
 xmit.send();
-xmit.start( "/make_noise" );
+oin => now;
+while(oin.recv(msg)) {
+		int i;
+		msg.getInt(0) => left;
+		<<< "got left id", left >>>;
+}
+
+xmit.start( "/make_noise/send" );
 xmit.send();
+oin => now;
+while(oin.recv(msg)) {
+		int i;
+		msg.getInt(0) => right;
+		<<< "got right id", right >>>;
+}
 
 -1.0 => float prevFreq;
 // infinite time loop
@@ -66,12 +88,12 @@ while( true )
 fun void updateSide() {
 		// start the message...
 		xmit.start( "/face" );
-		1 => xmit.add;
+		left => xmit.add;
 		// send it
 		xmit.send();
 		// start the message...
 		xmit.start( "/face" );
-		2 => xmit.add;
+		right => xmit.add;
 		// send it
 		xmit.send();				
 }
@@ -92,20 +114,18 @@ fun void interpolate_step(dur d) {
 				xmit.start( "/interpolate" );
 				// add int argument
 				0 => xmit.add; // source
-				1 => xmit.add; // left
-				2 => xmit.add; // right
+				left => xmit.add; // left
+				right => xmit.add; // right
 				// Math.sqrt(intp) => xmit.add;
 				intp => xmit.add;
 
 				xmit.send();
 
 				if (intp < 0.1) {
-						<<< 2 >>>;
 						2 +=> count;
 						2*framerate => now;
 						// framerate => now;
 				} else {
-						<<< 1 >>>;
 						1 +=> count;
 						// 2*framerate => now;
 						framerate => now;
