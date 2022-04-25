@@ -37,18 +37,18 @@ xmit.start( "/make_latent/send" );
 xmit.send();
 oin => now;
 while(oin.recv(msg)) {
-		int i;
-		msg.getInt(0) => left;
-		<<< "got left id", left >>>;
+    int i;
+    msg.getInt(0) => left;
+    <<< "got left id", left >>>;
 }
 
 xmit.start( "/make_latent/send" );
 xmit.send();
 oin => now;
 while(oin.recv(msg)) {
-		int i;
-		msg.getInt(0) => right;
-		<<< "got right id", right >>>;
+    int i;
+    msg.getInt(0) => right;
+    <<< "got right id", right >>>;
 }
 
 -1.0 => float prevFreq;
@@ -62,73 +62,73 @@ while( true )
     xmit.send();
 
     // frequency
-		while (s.freq() == prevFreq) {
-				Std.mtof( 33 + Math.random2(0,3) * 12 +
+    while (s.freq() == prevFreq) {
+        Std.mtof( 33 + Math.random2(0,3) * 12 +
           hi[Math.random2(0,hi.size()-1)] ) => s.freq;
-		}
-		s.freq() => prevFreq;	
+    }
+    s.freq() => prevFreq;  
 
     // harmonics
     Math.random2( 1, 5 ) => s.harmonics;
     
     Math.randomf() => float chance;
-		if (chance > 0.95) {
-				updateSide();
-				interpolate_step(360::ms, s.harmonics());
+    if (chance > 0.95) {
+        updateSide();
+        interpolate_step(360::ms, s.harmonics());
     }
     else if (chance > 0.25) {
         120::ms => now;
     } else {
-				updateSide();
-				interpolate_step(180::ms, s.harmonics());
+        updateSide();
+        interpolate_step(180::ms, s.harmonics());
         (240-180)::ms => now;
-	  }
+    }
 }
 
 fun void updateSide() {
-		// start the message...
-		xmit.start( "/face" );
-		left => xmit.add;
-		// send it
-		xmit.send();
-		// start the message...
-		xmit.start( "/face" );
-		right => xmit.add;
-		// send it
-		xmit.send();				
+    // start the message...
+    xmit.start( "/face" );
+    left => xmit.add;
+    // send it
+    xmit.send();
+    // start the message...
+    xmit.start( "/face" );
+    right => xmit.add;
+    // send it
+    xmit.send();        
 }
 
 fun void interpolate_step(dur d, int nharms) {
-		(1/24.0)::second => dur framerate;
+    (1/24.0)::second => dur framerate;
 
-		d / framerate => float frames;
+    d / framerate => float frames;
 
-		// Math.random2f(0.75, 3.0) => float magnitude;
-		0.5 + (nharms * 0.2) => float magnitude;
+    // Math.random2f(0.75, 3.0) => float magnitude;
+    0.5 + (nharms * 0.2) => float magnitude;
 
-		now + d => time later;
-		0 => float count;
-		while (now < later) {
-				(count / frames) * magnitude => float intp;
+    now + d => time later;
+    0 => float count;
+    while (now < later) {
+        (count / frames) * magnitude => float intp;
 
-				xmit.start( "/interpolate" );
-				// add int argument
-				0 => xmit.add; // source
-				left => xmit.add; // left
-				right => xmit.add; // right
-				// Math.sqrt(intp) => xmit.add;
-				intp => xmit.add;
+        xmit.start( "/interpolate" );
+        // add int argument
+        0 => xmit.add; // source
+        left => xmit.add; // left
+        right => xmit.add; // right
+        // Math.sqrt(intp) => xmit.add;
+        intp => xmit.add;
 
-				xmit.send();
+        xmit.send();
 
-				if (intp < 0.1) {
-						2 +=> count;
-						2*framerate => now;
-						// framerate => now;
-				} else {
-						1 +=> count;
-						// 2*framerate => now;
-						framerate => now;
-				}
-		}
+        if (intp < 0.1) {
+            2 +=> count;
+            2*framerate => now;
+            // framerate => now;
+        } else {
+            1 +=> count;
+            // 2*framerate => now;
+            framerate => now;
+        }
+    }
 }

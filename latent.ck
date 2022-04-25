@@ -1,5 +1,5 @@
 public class Latent {
-		// a reference to a single point in latent space
+    // a reference to a single point in latent space
 
-		int id;
+    int id;
 }

@@ -14,7 +14,7 @@ Blit s => JCRev r => dac;
 // infinite time loop
 while( true )
 {
-		m.face(l);
+    m.face(l);
 
     // frequency
     Std.mtof( 33 + Math.random2(0,3) * 12 +
