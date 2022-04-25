@@ -1,65 +1,23 @@
 // basic example of interpolating between two faces
 
-// destination host name
-"localhost" => string hostname;
-// destination port number
-5005 => int sendPort;
-5006 => int recvPort;
-
-// check command line
-if( me.args() ) me.arg(0) => hostname;
-if( me.args() > 1 ) me.arg(1) => Std.atoi => sendPort;
-
-// sender object
-OscOut xmit;
-
-// aim the transmitter at destination
-xmit.dest( hostname, sendPort );
-
-// reciever object
-OscIn oin;
-OscMsg msg;
-recvPort => oin.port;
-oin.addAddress("/make_latent/receive, i");
+Model m;
+m.makeLatent() @=> Latent draw;
+m.makeLatent() @=> Latent left;
+m.makeLatent() @=> Latent right;
 
 Blit s => JCRev r => dac;
 // .5 => s.gain;
 .1 => s.gain;
 .05 => r.mix;
 
-// an array
+// an array of scale degrees
 [ 0, 2, 4, 7, 9, 11 ] @=> int hi[];
-
-int left;
-int right;
-
-xmit.start( "/make_latent/send" );
-xmit.send();
-oin => now;
-while(oin.recv(msg)) {
-    int i;
-    msg.getInt(0) => left;
-    <<< "got left id", left >>>;
-}
-
-xmit.start( "/make_latent/send" );
-xmit.send();
-oin => now;
-while(oin.recv(msg)) {
-    int i;
-    msg.getInt(0) => right;
-    <<< "got right id", right >>>;
-}
 
 -1.0 => float prevFreq;
 // infinite time loop
 while( true )
 {
-    // start the message...
-    xmit.start( "/face" );
-    0 => xmit.add;
-    // send it
-    xmit.send();
+    m.face(draw);
 
     // frequency
     while (s.freq() == prevFreq) {
@@ -86,40 +44,23 @@ while( true )
 }
 
 fun void updateSide() {
-    // start the message...
-    xmit.start( "/face" );
-    left => xmit.add;
-    // send it
-    xmit.send();
-    // start the message...
-    xmit.start( "/face" );
-    right => xmit.add;
-    // send it
-    xmit.send();        
+    m.face(left);
+    m.face(right);
 }
 
 fun void interpolate_step(dur d, int nharms) {
-    (1/24.0)::second => dur framerate;
+    (1/24.0)::second => dur framerate; // 24 fps
 
     d / framerate => float frames;
 
-    // Math.random2f(0.75, 3.0) => float magnitude;
-    0.5 + (nharms * 0.2) => float magnitude;
+    0.7 + (nharms * 0.2) => float magnitude;
 
     now + d => time later;
     0 => float count;
     while (now < later) {
         (count / frames) * magnitude => float intp;
 
-        xmit.start( "/interpolate" );
-        // add int argument
-        0 => xmit.add; // source
-        left => xmit.add; // left
-        right => xmit.add; // right
-        // Math.sqrt(intp) => xmit.add;
-        intp => xmit.add;
-
-        xmit.send();
+        m.interpolate(draw, left, right, intp);
 
         if (intp < 0.1) {
             2 +=> count;

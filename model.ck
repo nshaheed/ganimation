@@ -12,24 +12,24 @@ public class Model {
     5005 => int sendPort;
     5006 => int recvPort;
 
-    OscIn oin;
-    OscOut oout;
+    OscIn in;
+    OscOut out;
     OscMsg msg;
 
-    recvPort => oin.port;
-    oout.dest(hostname, sendPort);
+    recvPort => in.port;
+    out.dest(hostname, sendPort);
 
     fun Latent@ makeLatent() {
 
-        oin.addAddress("/make_latent/receive, i");
-        oout.start( "/make_latent/send" );
-        oout.send();
+        in.addAddress("/make_latent/receive, i");
+        out.start( "/make_latent/send" );
+        out.send();
 
         <<< "waiting for response" >>>;
-        oin => now;
+        in => now;
 
         int id;
-        while(oin.recv(msg)) {
+        while(in.recv(msg)) {
             msg.getInt(0) => id;
             <<< "got left id", id >>>;
         }
@@ -38,12 +38,21 @@ public class Model {
         id => l.id;
         latents << l;
 
-        return new Latent;
+        return l;
     }
 
-    fun void face(Latent @l) {
-        oout.start("/face");
-        l.id => oout.add;
-        oout.send();
+    fun void face(Latent l) {
+        out.start("/face");
+        l.id => out.add;
+        out.send();
+    }
+
+    fun void interpolate(Latent l, Latent left, Latent right, float scale) {
+        out.start("/interpolate");
+        l.id => out.add;
+        left.id => out.add;
+        right.id => out.add;
+        scale => out.add;
+        out.send();
     }
 }
