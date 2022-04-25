@@ -2,6 +2,7 @@
 
 Model m;
 m.makeLatent() @=> Latent @ l;
+m.draw(l);
 
 Blit s => JCRev r => dac;
 .5 => s.gain;

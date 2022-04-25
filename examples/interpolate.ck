@@ -5,9 +5,11 @@ m.makeLatent() @=> Latent draw;
 m.makeLatent() @=> Latent left;
 m.makeLatent() @=> Latent right;
 
+m.draw(draw);
+
 Blit s => JCRev r => dac;
 // .5 => s.gain;
-.1 => s.gain;
+.5 => s.gain;
 .05 => r.mix;
 
 // an array of scale degrees

@@ -55,4 +55,10 @@ public class Model {
         scale => out.add;
         out.send();
     }
+
+    fun void draw(Latent l) {
+        out.start("/draw");
+        l.id => out.add;
+        out.send();
+    }
 }

@@ -19,6 +19,12 @@ import time
 
 use_gpu = True if torch.cuda.is_available() else False
 
+def draw(addr: str, args, id: int) -> None:
+    logging.debug(f'{addr=}, {id=}')
+
+    global model
+    model.set_draw(id)
+
 def random_face(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
 
@@ -62,6 +68,8 @@ class Model:
     id_counter = 0
     latent = None
 
+    draw = None # which latent to draw
+
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
         self.latent = {}
@@ -102,6 +110,10 @@ class Model:
     def interpolate(self, source_id: int, left_id: int, right_id: int, interp: float) -> None:
         """ Linear interpolation between left and right latents. """
         self.latent[source_id] = self.latent[left_id] * interp + self.latent[right_id] * (1.0 - interp)
+
+    def set_draw(self, source_id: int) -> None:
+        """ Set which latent from the model to draw. """
+        self.draw = source_id
 
 ###### OpenGL stuff ######
 def main() -> None:
@@ -203,10 +215,11 @@ def main() -> None:
         #     lastTime = currentTime
 
         # temp fix until proper latent selection is added
-        if len(model.latent) == 0:
+        if model.draw is None:
             continue
         with torch.no_grad():
-            generated_images = model.make_image(0)
+            id = model.draw
+            generated_images = model.make_image(id)
             generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
             generated_images = generated_images.transpose(0, 2) # the channel dim should be last
             generated_images = generated_images.rot90(1,[0,1]) # image needs to be rotate for some reason
@@ -251,6 +264,7 @@ def init_main():
     client = SimpleUDPClient(ip, port+1)  # Create client
 
     dispatch = dispatcher.Dispatcher()
+    dispatch.map("/draw", draw, "id")
     dispatch.map("/face", random_face, "id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
