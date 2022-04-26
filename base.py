@@ -207,13 +207,15 @@ def main() -> None:
     while not glfw.window_should_close(window):
         glfw.poll_events()
 
-        # currentTime = glfw.get_time()
-        # frameCount += 1
+        if args.framerate:
+            currentTime = glfw.get_time()
+            frameCount += 1
 
-        # if (currentTime - lastTime >= 1.0):
-        #     print("{} ms/frame".format(1000.0/frameCount))
-        #     frameCount = 0
-        #     lastTime = currentTime
+            if (currentTime - lastTime >= 1.0):
+                ctime = currentTime - lastTime # time delta in seconds
+                print(f'{1000.0 * ctime/frameCount:.3f} ms/frame ({frameCount/ctime:.1f} fps)')
+                frameCount = 0
+                lastTime = currentTime
 
         # temp fix until proper latent selection is added
         if model.draw is None:
@@ -253,6 +255,7 @@ client = None
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
+parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
 args = parser.parse_args()
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
