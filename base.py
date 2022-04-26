@@ -1,3 +1,4 @@
+import argparse
 import torch
 import matplotlib.pyplot as plt
 import torchvision
@@ -250,10 +251,17 @@ model = Model()
 
 client = None
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
+args = parser.parse_args()
+
 # init_main sets up all the osc/opengl coroutines and closes things properly
 def init_main():
     # set up logging
-    level = logging.DEBUG
+    if args.debug:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
     fmt = '[%(levelname)s] %(asctime)s - %(message)s'
     logging.basicConfig(level=level, format=fmt)
 
