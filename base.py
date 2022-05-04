@@ -17,8 +17,10 @@ from PIL import Image
 
 
 import time
+import math
 
 use_gpu = True if torch.cuda.is_available() else False
+device = 'cuda' if use_gpu else 'cpu'
 
 def draw(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
@@ -47,6 +49,11 @@ def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, in
     global model
     model.interpolate(source_id, left_id, right_id, interp)
 
+def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
+    logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}, {phase=}, {amp=}')
+
+    model.sin_osc(source_id, point1_id, point2_id, phase, amp)
+
 def run_server(dispatch):
     server = osc_server.ThreadingOSCUDPServer(
         (ip, port), dispatch)
@@ -68,6 +75,9 @@ class Model:
 
     id_counter = 0
     latent = None
+
+    vi = None
+    vj = None
 
     draw = None # which latent to draw
 
@@ -115,6 +125,25 @@ class Model:
     def set_draw(self, source_id: int) -> None:
         """ Set which latent from the model to draw. """
         self.draw = source_id
+
+    def sin_osc(self, source_id: int, point1_id: int, point2_id: int, phase: float = 0, amp: float = 1):
+        n = self.latent[point2_id] - self.latent[point1_id]
+        # TODO: make this a class method for model
+        n = torch.squeeze(n[:,:3])
+        n = torch.nn.functional.normalize(n, dim=0) # normalize
+
+        # TODO generalize this and make additive
+        if self.vi is None or self.vj is None:
+            self.vi = torch.randn(3, device=device)
+            self.vj = torch.cross(n, self.vi, dim=0)
+
+
+        # do the rotation and scale properly
+        result = amp * (math.cos(phase)*self.vi + math.sin(phase)*self.vj)
+        result = torch.cat((result, torch.zeros(512-3, device=device)))
+        result = torch.unsqueeze(result, 0)
+
+        self.latent[source_id] = result
 
 ###### OpenGL stuff ######
 def main() -> None:
@@ -277,6 +306,7 @@ def init_main():
     dispatch = dispatcher.Dispatcher()
     dispatch.map("/draw", draw, "id")
     dispatch.map("/face", random_face, "id")
+    dispatch.map("/sin_osc", sin_osc, "source_id", "point1_id", "point2_id", "phase", "amp")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
 

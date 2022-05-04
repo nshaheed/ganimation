@@ -61,4 +61,15 @@ public class Model {
         l.id => out.add;
         out.send();
     }
+
+    // control the sinosc lfo piecemeal
+    fun void sinOsc(Latent source, Latent point1, Latent point2, float phase, float amp) {
+        out.start("/sin_osc");
+        source.id => out.add;
+        point1.id => out.add;
+        point2.id => out.add;
+        phase => out.add;
+        amp => out.add;
+        out.send();
+    }
 }

@@ -2,3 +2,6 @@
 /*.jpg
 /*.png
 *.bak
+*.py#
+*.ck#
+/osc_test.py
