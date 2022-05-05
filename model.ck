@@ -72,4 +72,12 @@ public class Model {
         amp => out.add;
         out.send();
     }
+
+    fun void add(Latent source, Latent point1, Latent point2) {
+        out.start("/add");
+        source.id => out.add;
+        point1.id => out.add;
+        point2.id => out.add;
+        out.send();
+    }
 }

@@ -3,10 +3,13 @@
 // seed
 // Math.srandom(0);
 
+(1/30.0)::second => dur framerate; // 24 fps
+
 Model m;
 m.makeLatent() @=> Latent draw;
 m.makeLatent() @=> Latent left;
 m.makeLatent() @=> Latent right;
+m.makeLatent() @=> Latent intp;
 
 m.draw(draw);
 
@@ -22,7 +25,19 @@ Blit s => JCRev r => dac;
 -1.0 => float prevFreq;
 // infinite time loop
 
+m.face(left);
+m.face(right);
+
+// 2::second => now;
+
+// m.add(draw, left, right);
+// 2::second => now;
+
+// m.add(draw, draw, left);
+// 1::week => now;
+
 spork~ rotate();
+spork~ interpolate();
 1::week => now;
 while( true )
 {
@@ -47,17 +62,47 @@ while( true )
 }
 
 fun void rotate() {
-    (1/24.0)::second => dur framerate; // 24 fps
-
     SinOsc s => blackhole;
     SinOsc amp => blackhole;
-    3 => s.freq;
-    0.1 => amp.freq;
-    0.00005 => float scale;
+    2.5 => s.freq;
+    0.25 => amp.freq;
+    1 => amp.gain;
+    2 => float scale;
+    // 1.0 => float scale;
 
+    m.makeLatent() @=> Latent osc;
+    m.makeLatent() @=> Latent sum;
 
+    // draw @=> osc;
+
+    0 => int counter;
     while (true) {
-        m.sinOsc(draw, left, right, s.last(), scale * (amp.last()+1.01));
+        if (counter % 2 == 0) {
+            m.sinOsc(osc, left, right, s.last(), scale * (amp.last()+1.01));
+        }
+        m.add(draw, intp, osc);
+        // m.draw(osc);
+        1 +=> counter;
         framerate => now;
+    }
+}
+
+fun void interpolate() {
+    0.0 => float pos;
+    framerate / 10::second => float delta;
+    
+
+    while(true) {
+        while (pos <= 1) {
+            m.interpolate(intp, left, right, pos);
+            delta +=> pos;
+            framerate => now;
+        }
+
+        while (pos >= 0) {
+            m.interpolate(intp, left, right, pos);
+            delta -=> pos;
+            framerate => now;
+        }
     }
 }

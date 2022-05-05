@@ -19,40 +19,41 @@ from PIL import Image
 import time
 import math
 
+# TODO: adding logging/debug decorator
+
 use_gpu = True if torch.cuda.is_available() else False
 device = 'cuda' if use_gpu else 'cpu'
 
 def draw(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
 
-    global model
     model.set_draw(id)
 
 def random_face(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
 
-    global model
     model.replace_latent(id)
 
 def make_latent(addr: str, *args) -> None:
     logging.debug(f'{addr=}')
 
-    global model
     id = model.make_latent()
 
     client.send_message('/make_latent/receive', id)
 
-# def interpolate(addr: str, fixed_argument: List[Any], *osc_arguments: List[Any]) -> None:
 def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
     logging.debug(f'{addr=}, {source_id=}, {left_id=}, {right_id=}, {interp=}')
 
-    global model
     model.interpolate(source_id, left_id, right_id, interp)
 
 def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
     logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}, {phase=}, {amp=}')
 
     model.sin_osc(source_id, point1_id, point2_id, phase, amp)
+
+def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
+    logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}')
+    model.add(source_id, point1_id, point2_id)
 
 def run_server(dispatch):
     server = osc_server.ThreadingOSCUDPServer(
@@ -127,6 +128,7 @@ class Model:
         self.draw = source_id
 
     def sin_osc(self, source_id: int, point1_id: int, point2_id: int, phase: float = 0, amp: float = 1):
+        # get angle vector
         n = self.latent[point2_id] - self.latent[point1_id]
         # TODO: make this a class method for model
         n = torch.squeeze(n[:,:3])
@@ -144,6 +146,9 @@ class Model:
         result = torch.unsqueeze(result, 0)
 
         self.latent[source_id] = result
+
+    def add(self, source_id: int, point1_id: int, point2_id: int):
+        self.latent[source_id] = self.latent[point1_id] + self.latent[point2_id]
 
 ###### OpenGL stuff ######
 def main() -> None:
@@ -307,6 +312,7 @@ def init_main():
     dispatch.map("/draw", draw, "id")
     dispatch.map("/face", random_face, "id")
     dispatch.map("/sin_osc", sin_osc, "source_id", "point1_id", "point2_id", "phase", "amp")
+    dispatch.map("/add", add, "source_id", "point1_id", "point2_id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
 
