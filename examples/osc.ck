@@ -3,7 +3,7 @@
 // seed
 // Math.srandom(0);
 
-(1/30.0)::second => dur framerate; // 24 fps
+(1/24.0)::second => dur framerate; // 24 fps
 
 Model m;
 m.makeLatent() @=> Latent draw;
@@ -15,8 +15,8 @@ m.draw(draw);
 
 Blit s => JCRev r => dac;
 // .5 => s.gain;
-// .5 => s.gain;
-0 => s.gain;
+.5 => s.gain;
+// 0 => s.gain;
 .05 => r.mix;
 
 // an array of scale degrees
@@ -38,11 +38,10 @@ m.face(right);
 
 spork~ rotate();
 spork~ interpolate();
-1::week => now;
+// 1::week => now;
 while( true )
 {
-    m.face(draw);
-
+    m.face(right);
     // frequency
     while (s.freq() == prevFreq) {
         Std.mtof( 33 + Math.random2(0,3) * 12 +
@@ -57,14 +56,21 @@ while( true )
     if (chance > 0.25) {
         120::ms => now;
     } else {
-        (240-180)::ms => now;
+        // updateSide();
+        240::ms => now;
     }
+}
+
+fun void updateSide() {
+    m.face(left);
+    m.face(right);
 }
 
 fun void rotate() {
     SinOsc s => blackhole;
     SinOsc amp => blackhole;
-    2.5 => s.freq;
+    // 2.5 => s.freq;
+    36.0*0.12 => s.freq;
     0.25 => amp.freq;
     1 => amp.gain;
     2 => float scale;

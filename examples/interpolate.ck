@@ -35,8 +35,7 @@ while( true )
     if (chance > 0.95) {
         updateSide();
         interpolate_step(360::ms, s.harmonics());
-    }
-    else if (chance > 0.25) {
+    } else if (chance > 0.25) {
         120::ms => now;
     } else {
         updateSide();
