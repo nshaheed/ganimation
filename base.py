@@ -136,7 +136,7 @@ class Model:
         """ Use a latent to generate an image. """
         curr_latent = self.latent[id]
         result = self.model.test(curr_latent)
-        result = torchvision.transforms.functional.resize(result, (512,512))
+        # result = torchvision.transforms.functional.resize(result, (512,512))
 
         # print(f'{result = }, {result.shape = }')
         return result
@@ -178,7 +178,13 @@ def main() -> None:
     if not glfw.init():
         return
 
-    window = glfw.create_window(512, 512, "My OpenGL window", None, None)
+    print("waiting for model load...")
+    while model.model is None:
+        time.sleep(1/24)
+    print("model loaded!")
+
+    size = model.size()
+    window = glfw.create_window(size[0], size[1], "My OpenGL window", None, None)
 
     if not window:
         glfw.terminate()
@@ -275,8 +281,6 @@ def main() -> None:
         # temp fix until proper latent selection is added
         if model.draw is None:
             continue
-        if model.model is None:
-            continue
         with torch.no_grad():
             id = model.draw
             generated_images = model.make_image(id)
@@ -296,7 +300,7 @@ def main() -> None:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_FLOAT, generated_images)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size[0], size[1], 0, GL_RGB, GL_FLOAT, generated_images)
 
         glClear(GL_COLOR_BUFFER_BIT)
 
