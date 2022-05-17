@@ -19,6 +19,25 @@ public class Model {
     recvPort => in.port;
     out.dest(hostname, sendPort);
 
+    // just load the default model
+    fun static Model make() {
+        return make("");
+    }
+
+    fun static Model make(string model_name) {
+        Model m;
+        m.out.start("/load/send");
+        m.out.add(model_name);
+        m.out.send();
+
+        m.in.addAddress("/load/receive, i");
+        m.in => now;
+
+        <<< "loaded model" >>>;
+
+        return m;
+    }
+
     fun Latent@ makeLatent() {
 
         in.addAddress("/make_latent/receive, i");
@@ -31,7 +50,7 @@ public class Model {
         int id;
         while(in.recv(msg)) {
             msg.getInt(0) => id;
-            <<< "got left id", id >>>;
+            <<< "got id", id >>>;
         }
 
         Latent l;

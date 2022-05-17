@@ -29,6 +29,17 @@ def draw(addr: str, args, id: int) -> None:
 
     model.set_draw(id)
 
+def load(addr: str, args, model_name: str) -> None:
+    logging.debug(f'{addr=}, {model_name=}')
+
+    if model_name == "":
+        model.load()
+    else:
+        model.load(model_name)
+
+    # pythonosc requires and attached value
+    client.send_message('/load/receive', 0)
+
 def random_face(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
 
@@ -86,11 +97,19 @@ class Model:
         self.use_gpu = True if torch.cuda.is_available() else False
         self.latent = {}
 
-        # trained on high-quality celebrity faces "celebA" dataset
-        # this model outputs 512 x 512 pixel images
+    def load(self, model_name='celebAHQ-512'):
+        """ load a specific model (needs more vars). """
         self.model = torch.hub.load('facebookresearch/pytorch_GAN_zoo:hub',
-                               'PGAN', model_name='celebAHQ-512',
+                               'PGAN', model_name=model_name,
                                pretrained=True, useGPU=use_gpu)
+
+    def size(self) -> (int, int):
+        """ return the height and width of the model. """
+        if self.model is None:
+            logging.error('attempted to get shape when no model is loaded')
+            return None
+
+        return self.model.getSize() # TODO: PGAN-specific, need to make a virtual method
 
     def generate_noise(self):
         noise, _ = self.model.buildNoiseData(1)
@@ -117,6 +136,9 @@ class Model:
         """ Use a latent to generate an image. """
         curr_latent = self.latent[id]
         result = self.model.test(curr_latent)
+        result = torchvision.transforms.functional.resize(result, (512,512))
+
+        # print(f'{result = }, {result.shape = }')
         return result
 
     def interpolate(self, source_id: int, left_id: int, right_id: int, interp: float) -> None:
@@ -234,7 +256,6 @@ def main() -> None:
 
     texture = glGenTextures(1)
 
-
     frameCount = 0
     lastTime = glfw.get_time()
 
@@ -253,6 +274,8 @@ def main() -> None:
 
         # temp fix until proper latent selection is added
         if model.draw is None:
+            continue
+        if model.model is None:
             continue
         with torch.no_grad():
             id = model.draw
@@ -315,6 +338,7 @@ def init_main():
     dispatch.map("/add", add, "source_id", "point1_id", "point2_id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
+    dispatch.map("/load/send", load, "model_name")
 
     server = osc_server.ThreadingOSCUDPServer(
         (ip, port), dispatch)
