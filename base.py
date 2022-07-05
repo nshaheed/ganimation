@@ -3,11 +3,11 @@ import torch
 import matplotlib.pyplot as plt
 import torchvision
 import time
-import threading
 import logging
+import asyncio
 
 from pythonosc import dispatcher, osc_server
-from pythonosc.udp_client import SimpleUDPClient
+from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 import glfw
 from OpenGL.GL import *
@@ -65,12 +65,6 @@ def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, pha
 def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
     logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}')
     model.add(source_id, point1_id, point2_id)
-
-def run_server(dispatch):
-    server = osc_server.ThreadingOSCUDPServer(
-        (ip, port), dispatch)
-    print("Serving on {}".format(server.server_address))
-    server.serve_forever()
 
 num_images = 1
 
@@ -173,14 +167,14 @@ class Model:
         self.latent[source_id] = self.latent[point1_id] + self.latent[point2_id]
 
 ###### OpenGL stuff ######
-def main() -> None:
+async def main() -> None:
     # initialize glfw
     if not glfw.init():
         return
 
     print("waiting for model load...")
     while model.model is None:
-        time.sleep(1/24)
+        await asyncio.sleep(1.0/24)
     print("model loaded!")
 
     size = model.size()
@@ -266,6 +260,7 @@ def main() -> None:
     lastTime = glfw.get_time()
 
     while not glfw.window_should_close(window):
+        await asyncio.sleep(0) # this needs to be before poll events
         glfw.poll_events()
 
         if args.framerate:
@@ -320,7 +315,7 @@ parser.add_argument('-f', '--framerate', help='print frame info', action='store_
 args = parser.parse_args()
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
-def init_main():
+async def init_main():
     # set up logging
     if args.debug:
         level = logging.DEBUG
@@ -344,17 +339,16 @@ def init_main():
     dispatch.map("/make_latent/send", make_latent)
     dispatch.map("/load/send", load, "model_name")
 
-    server = osc_server.ThreadingOSCUDPServer(
-        (ip, port), dispatch)
-    x = threading.Thread(target=server.serve_forever)
-    x.start()
+    server = osc_server.AsyncIOOSCUDPServer(
+        (ip, port), dispatch, asyncio.get_event_loop())
+    transport, protocol = await server.create_serve_endpoint()
 
     print("past server start")
 
-    main()
+    await main()
 
-    server.server_close()
+    transport.close()
     print("shutting down...")
 
 if __name__ == "__main__":
-    init_main()
+    asyncio.run(init_main())
