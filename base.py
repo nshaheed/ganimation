@@ -20,12 +20,10 @@ from PIL import Image
 import time
 import math
 
-# TODO: adding logging/debug decorator
-
 use_gpu = True if torch.cuda.is_available() else False
 device = 'cuda' if use_gpu else 'cpu'
 
-def log(func):
+def log_osc(func):
     def printlog(*args, **kwargs):
         log_str = f'addr={args[0]}'
 
@@ -40,11 +38,11 @@ def log(func):
 
     return printlog
 
-@log
+@log_osc
 def draw(addr: str, args, id: int) -> None:
     model.set_draw(id)
 
-@log
+@log_osc
 def load(addr: str, args, model_name: str) -> None:
     if model_name == "":
         model.load()
@@ -54,25 +52,25 @@ def load(addr: str, args, model_name: str) -> None:
     # pythonosc requires and attached value
     client.send_message('/load/receive', 0)
 
-@log
+@log_osc
 def random_face(addr: str, args, id: int) -> None:
     model.replace_latent(id)
 
-@log
+@log_osc
 def make_latent(addr: str, *args) -> None:
     id = model.make_latent()
 
     client.send_message('/make_latent/receive', id)
 
-@log
+@log_osc
 def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
     model.interpolate(source_id, left_id, right_id, interp)
 
-@log
+@log_osc
 def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
     model.sin_osc(source_id, point1_id, point2_id, phase, amp)
 
-@log
+@log_osc
 def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
     model.add(source_id, point1_id, point2_id)
 
