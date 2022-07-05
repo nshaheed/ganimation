@@ -8,6 +8,7 @@ import asyncio
 
 from pythonosc import dispatcher, osc_server
 from pythonosc.osc_server import AsyncIOOSCUDPServer
+from pythonosc.udp_client import SimpleUDPClient
 
 import glfw
 from OpenGL.GL import *
@@ -23,6 +24,19 @@ import math
 
 use_gpu = True if torch.cuda.is_available() else False
 device = 'cuda' if use_gpu else 'cpu'
+
+def log(func):
+    def printlog(*args, **kwargs):
+        log_str = f'addr={args[0]}'
+
+        method_args = args[2:]
+        for idx, arg_name in enumerate(args[1]):
+            log_str += f', {arg_name}={method_args[idx]}'
+
+        logging.debug(log_str)
+        func(*args, **kwargs)
+
+    return printlog
 
 def draw(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
@@ -40,6 +54,7 @@ def load(addr: str, args, model_name: str) -> None:
     # pythonosc requires and attached value
     client.send_message('/load/receive', 0)
 
+@log
 def random_face(addr: str, args, id: int) -> None:
     logging.debug(f'{addr=}, {id=}')
 
@@ -57,6 +72,7 @@ def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, in
 
     model.interpolate(source_id, left_id, right_id, interp)
 
+@log
 def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
     logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}, {phase=}, {amp=}')
 
