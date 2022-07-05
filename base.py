@@ -30,22 +30,22 @@ def log(func):
         log_str = f'addr={args[0]}'
 
         method_args = args[2:]
-        for idx, arg_name in enumerate(args[1]):
-            log_str += f', {arg_name}={method_args[idx]}'
+
+        if len(method_args) > 0:
+            for idx, arg_name in enumerate(args[1]):
+                log_str += f', {arg_name}={method_args[idx]}'
 
         logging.debug(log_str)
         func(*args, **kwargs)
 
     return printlog
 
+@log
 def draw(addr: str, args, id: int) -> None:
-    logging.debug(f'{addr=}, {id=}')
-
     model.set_draw(id)
 
+@log
 def load(addr: str, args, model_name: str) -> None:
-    logging.debug(f'{addr=}, {model_name=}')
-
     if model_name == "":
         model.load()
     else:
@@ -56,30 +56,24 @@ def load(addr: str, args, model_name: str) -> None:
 
 @log
 def random_face(addr: str, args, id: int) -> None:
-    logging.debug(f'{addr=}, {id=}')
-
     model.replace_latent(id)
 
+@log
 def make_latent(addr: str, *args) -> None:
-    logging.debug(f'{addr=}')
-
     id = model.make_latent()
 
     client.send_message('/make_latent/receive', id)
 
+@log
 def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
-    logging.debug(f'{addr=}, {source_id=}, {left_id=}, {right_id=}, {interp=}')
-
     model.interpolate(source_id, left_id, right_id, interp)
 
 @log
 def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
-    logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}, {phase=}, {amp=}')
-
     model.sin_osc(source_id, point1_id, point2_id, phase, amp)
 
+@log
 def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
-    logging.debug(f'{addr=}, {source_id=}, {point1_id=}, {point2_id=}')
     model.add(source_id, point1_id, point2_id)
 
 num_images = 1
