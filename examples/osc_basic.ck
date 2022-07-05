@@ -5,7 +5,7 @@
 
 (1/24.0)::second => dur framerate; // 24 fps
 
-Model m;
+Model.make() @=> Model m;
 m.makeLatent() @=> Latent draw;
 m.makeLatent() @=> Latent left;
 m.makeLatent() @=> Latent right;
