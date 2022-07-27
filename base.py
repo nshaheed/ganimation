@@ -1,6 +1,5 @@
 import argparse
 import torch
-import matplotlib.pyplot as plt
 import torchvision
 import time
 import logging
@@ -14,8 +13,6 @@ import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
 import numpy as np
-from PIL import Image
-
 
 import time
 import math
@@ -49,7 +46,7 @@ def load(addr: str, args, model_name: str) -> None:
     else:
         model.load(model_name)
 
-    # pythonosc requires and attached value
+    # pythonosc requires an attached value
     client.send_message('/load/receive', 0)
 
 @log_osc
@@ -269,7 +266,7 @@ async def main() -> None:
 
     while not glfw.window_should_close(window):
         await asyncio.sleep(0) # this needs to be before poll events
-        glfw.poll_events()
+
 
         if args.framerate:
             currentTime = glfw.get_time()
@@ -310,6 +307,10 @@ async def main() -> None:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
 
         glfw.swap_buffers(window)
+
+        await asyncio.sleep(0) # this needs to be before poll events
+
+        glfw.poll_events()
 
     glfw.terminate()
 

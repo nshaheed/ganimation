@@ -27,7 +27,7 @@ while( true )
     Math.random2( 1, 5 ) => s.harmonics;
     
     Math.randomf() => float chance;
-    
+
     if (chance > 0.95) {
         360::ms => now;
     }

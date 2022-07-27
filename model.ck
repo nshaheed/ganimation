@@ -6,6 +6,8 @@ public class Model {
 
     int id;
 
+    1::second / 24.0 => dur framerate;
+
     // osc stuff
     "localhost" => string hostname;
 
@@ -26,12 +28,16 @@ public class Model {
 
     fun static Model make(string model_name) {
         Model m;
+
         m.out.start("/load/send");
         m.out.add(model_name);
         m.out.send();
 
         m.in.addAddress("/load/receive, i");
-        m.in => now;
+
+	OscMsg load;
+	// m.in => now;
+	while (!m.in.recv(load)) { };
 
         <<< "loaded model" >>>;
 
@@ -41,7 +47,7 @@ public class Model {
     fun Latent@ makeLatent() {
 
         in.addAddress("/make_latent/receive, i");
-        out.start( "/make_latent/send" );
+        out.start("/make_latent/send");
         out.send();
 
         <<< "waiting for response" >>>;
