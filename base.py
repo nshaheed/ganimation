@@ -38,31 +38,21 @@ def draw(addr: str, args, id: int) -> None:
 
 @log_osc
 def load(addr: str, args, model_name: str) -> None:
-    if model_name == "":
-        global curr_model
-        curr_model = model.model.Model()
-        curr_model.load()
-    else:
-        curr_model.load(model_name)
-
-    # pythonosc requires an attached value
-    client.send_message('/load/receive', 0)
-
-@log_osc
-def load2(addr: str, args, model_name: str) -> None:
+    global curr_model
     match addr.split('/')[2]:
         case 'StyleGAN':
-            global curr_model
             curr_model = model.model.StyleGAN3()
             curr_model.load(model_name)
+        case 'PGAN':
+            curr_model = model.model.Model()
+
+            if model_name == '':
+                curr_model.load()
+            else:
+                curr_model.load(model_name)            
         case _:
             logging.error('model type not found')
             
-    # if model_name == "":
-    #     model.load()
-    # else:
-    #     model.load(model_name)
-
     # pythonosc requires an attached value
     return_addr = '/'.join(addr.split('/')[:-1] + ['receive'])
     logging.info(return_addr)
@@ -264,8 +254,7 @@ async def init_main():
     dispatch.map("/add", add, "source_id", "point1_id", "point2_id")
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
-    dispatch.map("/load/send", load, "model_name")
-    dispatch.map("/load/*/send", load2, "model_name")
+    dispatch.map("/load/*/send", load, "model_name")
 
     server = osc_server.AsyncIOOSCUDPServer(
         (ip, port), dispatch, asyncio.get_event_loop())

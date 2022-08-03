@@ -27,11 +27,11 @@ public class Model {
     }
 
     fun void init(string model_name) {
-        out.start("/load/send");
+        out.start("/load/PGAN/send");
         out.add(model_name);
         out.send();
 
-        in.addAddress("/load/receive, i");
+        in.addAddress("/load/PGAN/receive, i");
 
 	OscMsg load;
 	in => now;
