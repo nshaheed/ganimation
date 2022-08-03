@@ -138,7 +138,7 @@ class Renderer:
             res.error = CapturedException()
         self._end_event.record(torch.cuda.current_stream(self._device))
         if 'image' in res:
-            res.image = self.to_cpu(res.image.float() / 255)
+            res.image = self.to_cpu(res.image.float() / 255) # scale down to (0,1)
         if 'stats' in res:
             res.stats = self.to_cpu(res.stats).numpy()
         if 'error' in res:
@@ -266,7 +266,8 @@ class Renderer:
         all_zs = np.zeros([len(all_seeds), G.z_dim], dtype=np.float32)
         all_cs = np.zeros([len(all_seeds), G.c_dim], dtype=np.float32)
         for idx, seed in enumerate(all_seeds):
-            rnd = np.random.RandomState(seed)
+            # rnd = np.random.RandomState(seed)
+            rnd = np.random.RandomState()            
             all_zs[idx] = rnd.randn(G.z_dim)
             if G.c_dim > 0:
                 all_cs[idx, rnd.randint(G.c_dim)] = 1

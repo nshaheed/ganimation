@@ -2,7 +2,8 @@
 
 // Load default celebAHQ-512 model
 StyleGAN m;
-m.init(me.dir() + "../local_models/stylegan3-r-afhqv2-512x512.pkl");
+// m.init(me.dir() + "../local_models/stylegan3-r-afhqv2-512x512.pkl");
+m.init(me.dir() + "../local_models/lia1.pkl");
 
 <<< "model initialized" >>>;
 
