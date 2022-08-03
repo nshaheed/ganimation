@@ -22,26 +22,22 @@ public class Model {
     out.dest(hostname, sendPort);
 
     // just load the default model
-    fun static Model make() {
-        return make("");
+    fun void init() {
+        init("");
     }
 
-    fun static Model make(string model_name) {
-        Model m;
+    fun void init(string model_name) {
+        out.start("/load/send");
+        out.add(model_name);
+        out.send();
 
-        m.out.start("/load/send");
-        m.out.add(model_name);
-        m.out.send();
-
-        m.in.addAddress("/load/receive, i");
+        in.addAddress("/load/receive, i");
 
 	OscMsg load;
-	// m.in => now;
-	while (!m.in.recv(load)) { };
+	in => now;
+	// while (!in.recv(load)) { };
 
         <<< "loaded model" >>>;
-
-        return m;
     }
 
     fun Latent@ makeLatent() {

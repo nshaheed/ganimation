@@ -1,6 +1,8 @@
 // basic example of interpolating between two faces
 
-Model.make() @=> Model m;
+Model m;
+m.init();
+
 m.makeLatent() @=> Latent draw;
 m.makeLatent() @=> Latent left;
 m.makeLatent() @=> Latent right;

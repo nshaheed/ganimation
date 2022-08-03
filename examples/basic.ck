@@ -1,7 +1,9 @@
 // Randomly generate faces to the beat of blit
 
 // Load default celebAHQ-512 model
-Model.make() @=> Model m;
+Model m;
+m.init();
+
 // Model.make("DTD") @=> Model m;
 m.makeLatent() @=> Latent @ l;
 m.draw(l);
