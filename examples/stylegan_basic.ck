@@ -1,8 +1,11 @@
 // Randomly generate faces to the beat of blit
 
 // Load default celebAHQ-512 model
-Model.make() @=> Model m;
-// Model.make("DTD") @=> Model m;
+StyleGAN m;
+m.init(me.dir() + "../local_models/stylegan3-r-afhqv2-512x512.pkl");
+
+<<< "model initialized" >>>;
+
 m.makeLatent() @=> Latent @ l;
 m.draw(l);
 

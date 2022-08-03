@@ -138,7 +138,7 @@ class Renderer:
             res.error = CapturedException()
         self._end_event.record(torch.cuda.current_stream(self._device))
         if 'image' in res:
-            res.image = self.to_cpu(res.image).numpy()
+            res.image = self.to_cpu(res.image.float() / 255)
         if 'stats' in res:
             res.stats = self.to_cpu(res.stats).numpy()
         if 'error' in res:

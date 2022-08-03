@@ -15,7 +15,7 @@ import numpy as np
 
 import time
 
-from model.model import Model
+import model.model
 
 def log_osc(func):
     def printlog(*args, **kwargs):
@@ -34,46 +34,68 @@ def log_osc(func):
 
 @log_osc
 def draw(addr: str, args, id: int) -> None:
-    model.set_draw(id)
+    curr_model.set_draw(id)
 
 @log_osc
 def load(addr: str, args, model_name: str) -> None:
     if model_name == "":
-        model.load()
+        global curr_model
+        curr_model = model.model.Model()
+        curr_model.load()
     else:
-        model.load(model_name)
+        curr_model.load(model_name)
 
     # pythonosc requires an attached value
     client.send_message('/load/receive', 0)
 
 @log_osc
+def load2(addr: str, args, model_name: str) -> None:
+    match addr.split('/')[2]:
+        case 'StyleGAN':
+            global curr_model
+            curr_model = model.model.StyleGAN3()
+            curr_model.load(model_name)
+        case _:
+            logging.error('model type not found')
+            
+    # if model_name == "":
+    #     model.load()
+    # else:
+    #     model.load(model_name)
+
+    # pythonosc requires an attached value
+    return_addr = '/'.join(addr.split('/')[:-1] + ['receive'])
+    logging.info(return_addr)
+    client.send_message(return_addr, 0)    
+
+@log_osc
 def random_face(addr: str, args, id: int) -> None:
-    model.replace_latent(id)
+    curr_model.replace_latent(id)
 
 @log_osc
 def make_latent(addr: str, *args) -> None:
-    id = model.make_latent()
+    id = curr_model.make_latent()
 
     client.send_message('/make_latent/receive', id)
 
 @log_osc
 def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, interp: float) -> None:
-    model.interpolate(source_id, left_id, right_id, interp)
+    curr_model.interpolate(source_id, left_id, right_id, interp)
 
 @log_osc
 def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
-    model.sin_osc(source_id, point1_id, point2_id, phase, amp)
+    curr_model.sin_osc(source_id, point1_id, point2_id, phase, amp)
 
 @log_osc
 def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
-    model.add(source_id, point1_id, point2_id)
+    curr_model.add(source_id, point1_id, point2_id)
 
 num_images = 1
 
 ip = "127.0.0.1"
 port = 5005
 
-model = None
+curr_model = None
 latent = None
 
 ###### OpenGL stuff ######
@@ -83,11 +105,11 @@ async def main() -> None:
         return
 
     print("waiting for model load...")
-    while model.model is None:
+    while curr_model is None:
         await asyncio.sleep(1.0/24)
     print("model loaded!")
 
-    size = model.size()
+    size = curr_model.size()
     window = glfw.create_window(size[0], size[1], "My OpenGL window", None, None)
 
     if not window:
@@ -184,18 +206,11 @@ async def main() -> None:
                 lastTime = currentTime
 
         # temp fix until proper latent selection is added
-        if model.draw is None:
+        if curr_model.draw is None:
             continue
         with torch.no_grad():
-            id = model.draw
-            generated_images = model.make_image(id)
-            generated_images = generated_images[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
-            generated_images = generated_images.transpose(0, 2) # the channel dim should be last
-            generated_images = generated_images.rot90(1,[0,1]) # image needs to be rotate for some reason
-            generated_images = torch.add(generated_images, 1) # scale the image: (-1,1) -> (0,1)
-            generated_images = torch.div(generated_images, 2)
-            generated_images = np.asarray(generated_images) # convert to numpy array to feed to texture
-
+            id = curr_model.draw
+            generated_images = curr_model.make_image(id)
 
         glBindTexture(GL_TEXTURE_2D, texture)
         #texture wrapping params
@@ -219,9 +234,6 @@ async def main() -> None:
 
     glfw.terminate()
 
-# model = models.model.Model()
-model = Model()
-
 client = None
 
 parser = argparse.ArgumentParser()
@@ -240,7 +252,7 @@ async def init_main():
     logging.basicConfig(level=level, format=fmt)
 
     # set up model (TODO handle multiple models)
-    global model
+    global curr_model
 
     global client
     client = SimpleUDPClient(ip, port+1)  # Create client
@@ -253,12 +265,13 @@ async def init_main():
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
     dispatch.map("/load/send", load, "model_name")
+    dispatch.map("/load/*/send", load2, "model_name")
 
     server = osc_server.AsyncIOOSCUDPServer(
         (ip, port), dispatch, asyncio.get_event_loop())
     transport, protocol = await server.create_serve_endpoint()
 
-    print("past server start")
+    logging.info("OSC server is loaded")
 
     await main()
 

@@ -72,9 +72,13 @@ class Model:
         """ Use a latent to generate an image. """
         curr_latent = self.latent[id]
         result = self.model.test(curr_latent)
-        # result = torchvision.transforms.functional.resize(result, (512,512))
+        result = result[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
+        result = result.transpose(0, 2)         # the channel dim should be last
+        result = result.rot90(1,[0,1])          # image needs to be rotated for some reason
+        result = torch.add(result, 1)           # scale the image: (-1,1) -> (0,1)
+        result = torch.div(result, 2)
+        result = np.asarray(result)             # convert to numpy array to feed to texture
 
-        # print(f'{result = }, {result.shape = }')
         return result
 
     def interpolate(self, source_id: int, left_id: int, right_id: int, interp: float) -> None:
@@ -147,4 +151,7 @@ class StyleGAN3(Model):
     def make_image(self, id):
         result = self.render_obj.render(**self.render_args)
 
-        return result.image
+        result = result.image.rot90(1,[0,1]).rot90(1,[0,1]) # image needs to be rotated for some reason
+        result = np.asarray(result)
+
+        return result
