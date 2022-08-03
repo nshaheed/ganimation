@@ -4,4 +4,7 @@
 *.bak
 *.py#
 *.ck#
+*.pkl
 /osc_test.py
+/__pycache__/
+/*/__pycache__/

@@ -1,6 +1,15 @@
 import torch
 import logging
 
+# styleGAN-specific
+import pickle
+import dnnlib
+import numpy as np
+from viz import renderer
+
+import sys
+import legacy
+
 ## TODO abstract this to allow for subclasses for different models (stylegan, pgan, w/e)
 class Model:
     model = None
@@ -17,8 +26,10 @@ class Model:
 
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
-        self.device = 'cuda' if self.use_gpu else 'cpu'
         self.latent = {}
+
+    def setDevice(self) -> None:
+        self.device = 'cuda' if self.use_gpu else 'cpu'
 
     def load(self, model_name='celebAHQ-512'):
         """ load a specific model (needs more vars). """
@@ -94,3 +105,44 @@ class Model:
 
     def add(self, source_id: int, point1_id: int, point2_id: int):
         self.latent[source_id] = self.latent[point1_id] + self.latent[point2_id]
+
+class StyleGAN3(Model):
+
+    # latent = None
+    model = None
+    # device = None
+    pkl = None
+    render_obj = None
+    render_args = None
+
+    def __init__(self):
+        self.latent = {}
+        self.setDevice()
+
+    def load(self, pkl_address) -> None:
+        self.render_args = dnnlib.EasyDict(
+            pkl = pkl_address
+        )
+    
+        self.render_obj = renderer.Renderer()
+    
+        # pre-load network
+        self.model = self.render_obj.get_network(pkl_address, 'G_ema')
+
+    def size(self) -> (int, int):
+        res = self.model.img_resolution
+        return (res, res)
+
+    # TODO currently only does the z latent space, need more
+    # fine-grained control of this in w space
+    def generate_noise(self):
+
+        # TODO make setting seed an option
+        # noise = torch.from_numpy(np.random.RandomState(seed).randn(1, self.model.z_dim)).to(device)
+        noise = torch.from_numpy(np.random.RandomState().randn(1, self.model.z_dim)).to(self.device)
+        return noise
+
+    def make_image(self, id):
+        result = self.render_obj.render(**self.render_args)
+
+        return result.image
