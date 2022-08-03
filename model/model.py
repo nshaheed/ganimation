@@ -1,5 +1,6 @@
-import torch
 import logging
+import math
+import torch
 
 # styleGAN-specific
 import pickle
@@ -27,6 +28,7 @@ class Model:
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
         self.latent = {}
+        self.setDevice()
 
     def setDevice(self) -> None:
         self.device = 'cuda' if self.use_gpu else 'cpu'

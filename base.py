@@ -14,7 +14,6 @@ import OpenGL.GL.shaders
 import numpy as np
 
 import time
-import math
 
 from model.model import Model
 
