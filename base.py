@@ -39,6 +39,7 @@ def draw(addr: str, args, id: int) -> None:
 @log_osc
 def load(addr: str, args, model_name: str) -> None:
     global curr_model
+
     match addr.split('/')[2]:
         case 'StyleGAN':
             curr_model = model.model.StyleGAN3()
@@ -94,10 +95,10 @@ async def main() -> None:
     if not glfw.init():
         return
 
-    print("waiting for model load...")
+    logging.info("Waiting for model load...")
     while curr_model is None:
         await asyncio.sleep(1.0/24)
-    print("model loaded!")
+    logging.info("Model loaded!")
 
     size = curr_model.size()
     window = glfw.create_window(size[0], size[1], "My OpenGL window", None, None)

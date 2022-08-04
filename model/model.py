@@ -134,6 +134,7 @@ class StyleGAN3(Model):
     
         # pre-load network
         self.model = self.render_obj.get_network(pkl_address, 'G_ema')
+        self.make_image(self.make_latent())
 
     def size(self) -> (int, int):
         res = self.model.img_resolution
@@ -149,6 +150,7 @@ class StyleGAN3(Model):
         return noise
 
     def make_image(self, id):
+        self.render_args['latent'] = self.latent[id]
         result = self.render_obj.render(**self.render_args)
 
         result = result.image.rot90(1,[0,1]).rot90(1,[0,1]) # image needs to be rotated for some reason
