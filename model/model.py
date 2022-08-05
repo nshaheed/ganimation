@@ -90,27 +90,15 @@ class Model:
         self.draw = source_id
 
     def sin_osc(self, source_id: int, point1_id: int, point2_id: int, phase: float = 0, amp: float = 1):
-        # get angle vector
-        n = self.latent[point2_id] - self.latent[point1_id]
-        # TODO: make this a class method for model
-        n = torch.squeeze(n[:,:3])
-        n = torch.nn.functional.normalize(n, dim=0) # normalize
-
-        # TODO generalize this and make additive
-        if self.vi is None or self.vj is None:
-            self.vi = torch.randn(3, device=self.device)
-            self.vj = torch.cross(n, self.vi, dim=0)
-
-
-        # do the rotation and scale properly
-        result = amp * (math.cos(phase)*self.vi + math.sin(phase)*self.vj)
-        result = torch.cat((result, torch.zeros(512-3, device=self.device)))
-        result = torch.unsqueeze(result, 0)
-
-        self.latent[source_id] = result
+        n = self.latent[point1_id]
+        n = amp * math.cos(phase) * n
+        self.latent[source_id] = n
 
     def add(self, source_id: int, point1_id: int, point2_id: int):
         self.latent[source_id] = self.latent[point1_id] + self.latent[point2_id]
+
+    def mul(self, source_id: int, point1_id: int, scalar: float):
+        self.latent[source_id] = scalar * self.latent[point1_id]
 
 class StyleGAN3(Model):
 
