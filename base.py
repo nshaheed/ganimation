@@ -13,8 +13,6 @@ from OpenGL.GL import *
 import OpenGL.GL.shaders
 import numpy as np
 
-import time
-
 import model.model
 
 def log_osc(func):
@@ -56,6 +54,7 @@ def load(addr: str, args, model_name: str) -> None:
             
     # pythonosc requires an attached value
     return_addr = '/'.join(addr.split('/')[:-1] + ['receive'])
+
     logging.info(return_addr)
     client.send_message(return_addr, 0)    
 
@@ -66,6 +65,8 @@ def random_face(addr: str, args, id: int) -> None:
 @log_osc
 def make_latent(addr: str, *args) -> None:
     id = curr_model.make_latent()
+
+    time.sleep(0.01)
 
     client.send_message('/make_latent/receive', id)
 
@@ -80,6 +81,10 @@ def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, pha
 @log_osc
 def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
     curr_model.add(source_id, point1_id, point2_id)
+
+@log_osc
+def mul(addr: str, args, source_id: int, point1_id: int, scalar: float) -> None:
+    curr_model.mul(source_id, point1_id, scalar)    
 
 num_images = 1
 
@@ -253,6 +258,7 @@ async def init_main():
     dispatch.map("/face", random_face, "id")
     dispatch.map("/sin_osc", sin_osc, "source_id", "point1_id", "point2_id", "phase", "amp")
     dispatch.map("/add", add, "source_id", "point1_id", "point2_id")
+    dispatch.map("/mul", mul, "source_id", "point1_id", "scalar")    
     dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
     dispatch.map("/make_latent/send", make_latent)
     dispatch.map("/load/*/send", load, "model_name")

@@ -33,9 +33,9 @@ public class Model {
 
         in.addAddress("/load/PGAN/receive, i");
 
-	OscMsg load;
-	in => now;
-	// while (!in.recv(load)) { };
+	      OscMsg load;
+	      in => now;
+	      // while (!in.recv(load)) { };
 
         <<< "loaded model" >>>;
     }
@@ -101,4 +101,12 @@ public class Model {
         point2.id => out.add;
         out.send();
     }
+
+    fun void mul(Latent source, Latent point1, float scalar) {
+        out.start("/mul");
+        source.id => out.add;
+        point1.id => out.add;
+        scalar => out.add;
+        out.send();
+    }    
 }

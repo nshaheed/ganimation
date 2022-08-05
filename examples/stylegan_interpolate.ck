@@ -1,8 +1,9 @@
 // basic example of interpolating between two faces
 
 StyleGAN m;
-// m.init(me.dir() + "../local_models/stylegan3-r-afhqv2-512x512.pkl");
-m.init(me.dir() + "../local_models/lia1.pkl");
+m.init(me.dir() + "../local_models/stylegan3-r-afhqv2-512x512.pkl");
+// m.init(me.dir() + "../local_models/lia1.pkl");
+// m.init(me.dir() + "../../lia_models/Face-Hands_Lia-Coleman.pkl");
 
 m.makeLatent() @=> Latent draw;
 m.makeLatent() @=> Latent left;

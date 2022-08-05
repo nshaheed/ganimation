@@ -9,11 +9,11 @@ public class StyleGAN extends Model {
 
         in.addAddress("/load/StyleGAN/receive, i");
 
-	OscMsg load;
+	      OscMsg load;
 
-	<<< "waiting for load..." >>>;
-	in => now;
-	// while (!m.in.recv(load)) { };
+	      <<< "waiting for load...", now >>>;
+	      in => now;
+	      // while (!m.in.recv(load)) { };
 
         <<< "loaded StyleGAN" >>>;
     }

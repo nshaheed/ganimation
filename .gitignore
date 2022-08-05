@@ -8,3 +8,4 @@
 /osc_test.py
 /__pycache__/
 /*/__pycache__/
+*.pyc
