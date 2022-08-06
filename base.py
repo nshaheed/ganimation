@@ -96,6 +96,7 @@ def load_latent(addr: str, args, filepath: str) -> None:
 
     time.sleep(0.01)
 
+    logging.info(f'latent id = {id}')
     client.send_message('/load/latent/receive', id)
 
 num_images = 1

@@ -41,6 +41,12 @@ public class Model {
         <<< "loaded model" >>>;
     }
 
+    fun OscIn makeOscIn() {
+        OscIn newIn;
+        recvPort => in.port;
+        return newIn;
+    }
+
     // Bundles all messages on a per-frame basis. This improves
     // performance & responsiveness with the python osc server.
     fun void driveFrames() {
@@ -57,14 +63,17 @@ public class Model {
 
     fun Latent@ makeLatent() {
         out.startMsg("/make_latent/send");
-        in.addAddress("/make_latent/receive, i");
+
+        makeOscIn() @=> OscIn newIn;
+        OscMsg newMsg;
+        newIn.addAddress("/make_latent/receive, i");
 
         <<< "waiting for response" >>>;
-        in => now;
+        newIn => now;
 
         int id;
-        while(in.recv(msg)) {
-            msg.getInt(0) => id;
+        while(newIn.recv(newMsg)) {
+            newMsg.getInt(0) => id;
             <<< "got id", id >>>;
         }
 
@@ -118,13 +127,16 @@ public class Model {
     }
 
     fun Latent@ loadLatent(string filepath) {
-        in.addAddress("/latent/load/receive, i");
-
+        <<< "about to start message" >>>;
         out.startMsg("/make_latent/send, s");
         filepath => out.addString;
 
+        <<< "about to receive message" >>>;
+        in.addAddress("/latent/load/receive, i");
+
         int id;
         while(in.recv(msg)) {
+            <<< "in loop", msg.address >>>;
             msg.getInt(0) => id;            
         }
 
@@ -136,7 +148,7 @@ public class Model {
     }
 
     fun void saveLatent(Latent l, string filepath) {
-        out.startMsg("/latent/save, i f");
+        out.startMsg("/latent/save, i s");
         l.id => out.addInt;
         filepath => out.addString;
     }
