@@ -4,6 +4,9 @@ public class Model {
     // latent spaces
     Latent @ latents[0];
 
+    // latents yet to be processed by the backend
+    Latent @ makeLatentStack[0];
+
     int id;
 
     1::second / 24.0 => dur framerate;
@@ -21,22 +24,21 @@ public class Model {
     recvPort => in.port;
     out.setHost(hostname, sendPort);
 
+    Event modelLoad;
+
     // just load the default model
     fun void init() {
         init("");
     }
 
     fun void init(string model_name) {
+        spork~ oscListener();
         out.openBundle(now);
         spork~ driveFrames();
         out.startMsg("/load/PGAN/send, s");
         out.addString(model_name);
 
-        in.addAddress("/load/PGAN/receive, i");
-
-	      OscMsg load;
-	      in => now;
-	      // while (!in.recv(load)) { };
+        modelLoad => now;
 
         <<< "loaded model" >>>;
     }
@@ -52,6 +54,7 @@ public class Model {
     fun void driveFrames() {
         while (true) {
             framerate => now;
+	    // <<< "driving frame" >>>;
             // ensure that the bundle is closed after any messages on the frame are set
             me.yield();
             out.closeBundle();
@@ -60,27 +63,47 @@ public class Model {
         }
     }
 
+    // listen for all osc messages from python backend and process
+    fun void oscListener() {
+    	in.listenAll();
+
+	while(true) {
+	    in => now;
+	    while(in.recv(msg)) {
+
+                <<< "got message from", msg.address >>>;
+	        if (RegEx.match("/load/.*/receive", msg.address)) {
+		   modelLoad.broadcast();
+		}
+
+		if (msg.address == "/make_latent/receive") {
+                   msg.getInt(0) => int id;
+
+                   makeLatentStack[makeLatentStack.size()-1] @=> Latent l;
+                   makeLatentStack.popBack();
+                   id => l.id;
+                   l.loaded.broadcast();
+		}
+
+		if (msg.address == "/latent/load/receive") {
+                   msg.getString(0) => string filepath;
+                   msg.getInt(1) => int id;
+
+                   id => latents[filepath].id;
+                   latents[filepath].loaded.broadcast();
+		}
+	    }
+	}
+    }
 
     fun Latent@ makeLatent() {
+        <<< "[makeLatent]" >>>;
         out.startMsg("/make_latent/send");
 
-        makeOscIn() @=> OscIn newIn;
-        OscMsg newMsg;
-        newIn.addAddress("/make_latent/receive, i");
-
-        <<< "waiting for response" >>>;
-        newIn => now;
-
-        int id;
-        while(newIn.recv(newMsg)) {
-            newMsg.getInt(0) => id;
-            <<< "got id", id >>>;
-        }
-
         Latent l;
-        id => l.id;
-        latents << l;
+        makeLatentStack << l;
 
+        l.loaded => now;
         return l;
     }
 
@@ -131,19 +154,13 @@ public class Model {
         out.startMsg("/make_latent/send, s");
         filepath => out.addString;
 
-        <<< "about to receive message" >>>;
-        in.addAddress("/latent/load/receive, i");
-
-        int id;
-        while(in.recv(msg)) {
-            <<< "in loop", msg.address >>>;
-            msg.getInt(0) => id;            
-        }
-
         Latent l;
-        id => l.id;
-        latents << l;
+        l @=> latents[filepath];
 
+        l.loaded => now;
+        <<< "latent", filepath, "loaded" >>>;
+
+        latents.erase(filepath);
         return l;
     }
 

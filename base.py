@@ -66,8 +66,6 @@ def random_face(addr: str, args, id: int) -> None:
 def make_latent(addr: str, *args) -> None:
     id = curr_model.make_latent()
 
-    time.sleep(0.01)
-
     client.send_message('/make_latent/receive', id)
 
 @log_osc
@@ -94,10 +92,8 @@ def save_latent(addr: str, args, source_id: id, filepath: str) -> None:
 def load_latent(addr: str, args, filepath: str) -> None:
     id = curr_model.load_latent(filepath)
 
-    time.sleep(0.01)
-
     logging.info(f'latent id = {id}')
-    client.send_message('/load/latent/receive', id)
+    client.send_message('/load/latent/receive', filepath, id)
 
 num_images = 1
 
@@ -202,7 +198,6 @@ async def main() -> None:
 
     while not glfw.window_should_close(window):
         await asyncio.sleep(0) # this needs to be before poll events
-
 
         if args.framerate:
             currentTime = glfw.get_time()
