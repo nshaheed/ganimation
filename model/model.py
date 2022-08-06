@@ -20,9 +20,6 @@ class Model:
     id_counter = 0
     latent = None
 
-    vi = None
-    vj = None
-
     draw = None # which latent to draw
 
     def __init__(self):
