@@ -55,7 +55,7 @@ def load(addr: str, args, model_name: str) -> None:
     # pythonosc requires an attached value
     return_addr = '/'.join(addr.split('/')[:-1] + ['receive'])
 
-    logging.info(return_addr)
+    logging.debug(f'{return_addr} calling back to client')
     client.send_message(return_addr, 0)    
 
 @log_osc
@@ -117,6 +117,10 @@ async def main() -> None:
     while curr_model is None:
         await asyncio.sleep(1.0/24)
     logging.info("Model loaded!")
+
+    # stall the render loop if in test mode
+    while args.test:
+        await asyncio.sleep(1.0)
 
     size = curr_model.size()
     window = glfw.create_window(size[0], size[1], "My OpenGL window", None, None)
@@ -244,6 +248,7 @@ client = None
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
 parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
+parser.add_argument('-t', '--test', help='testing mode, don\'t render images', action='store_true')
 args = parser.parse_args()
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
