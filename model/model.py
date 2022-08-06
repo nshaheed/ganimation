@@ -48,10 +48,14 @@ class Model:
         noise, _ = self.model.buildNoiseData(1)
         return noise
 
-    def make_latent(self) -> int:
+    def make_latent(self, arr=None) -> int:
         """ Make a random latent and add to latent collection. """
         id = self.id_counter
-        self.latent[id] = self.generate_noise()
+
+        if arr is not None:
+            self.latent[id] = arr
+        else:
+            self.latent[id] = self.generate_noise()
 
         # make sure each id is unique
         self.id_counter += 1
@@ -96,6 +100,18 @@ class Model:
 
     def mul(self, source_id: int, point1_id: int, scalar: float):
         self.latent[source_id] = scalar * self.latent[point1_id]
+
+    # save latent to file
+    def save_latent(self, source_id: int, filepath: str):
+        latent = self.latent[source_id].numpy()
+        np.save(filepath, latent)
+
+    # load latent from file
+    def load_latent(self, filepath: str) -> int:
+        loaded_latent = np.load(filepath)
+        loaded_latent = torch.from_numpy(loaded_latent).to(self.device)
+        return self.make_latent(arr=loaded_latent)
+
 
 class StyleGAN3(Model):
 
