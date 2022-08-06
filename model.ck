@@ -15,11 +15,11 @@ public class Model {
     5006 => int recvPort;
 
     OscIn in;
-    OscOut out;
+    OscSend out;
     OscMsg msg;
 
     recvPort => in.port;
-    out.dest(hostname, sendPort);
+    out.setHost(hostname, sendPort);
 
     // just load the default model
     fun void init() {
@@ -27,9 +27,10 @@ public class Model {
     }
 
     fun void init(string model_name) {
-        out.start("/load/PGAN/send");
-        out.add(model_name);
-        out.send();
+        out.openBundle(now);
+        spork~ driveFrames();
+        out.startMsg("/load/PGAN/send, s");
+        out.addString(model_name);
 
         in.addAddress("/load/PGAN/receive, i");
 
@@ -40,11 +41,23 @@ public class Model {
         <<< "loaded model" >>>;
     }
 
-    fun Latent@ makeLatent() {
+    // Bundles all messages on a per-frame basis. This improves
+    // performance & responsiveness with the python osc server.
+    fun void driveFrames() {
+        while (true) {
+            framerate => now;
+            // ensure that the bundle is closed after any messages on the frame are set
+            me.yield();
+            out.closeBundle();
 
+            out.openBundle(now);
+        }
+    }
+
+
+    fun Latent@ makeLatent() {
         in.addAddress("/make_latent/receive, i");
-        out.start("/make_latent/send");
-        out.send();
+        out.startMsg("/make_latent/send");
 
         <<< "waiting for response" >>>;
         in => now;
@@ -63,50 +76,44 @@ public class Model {
     }
 
     fun void face(Latent l) {
-        out.start("/face");
-        l.id => out.add;
-        out.send();
+        out.startMsg("/face, i");
+        l.id => out.addInt;
     }
 
     fun void interpolate(Latent l, Latent left, Latent right, float scale) {
-        out.start("/interpolate");
-        l.id => out.add;
-        left.id => out.add;
-        right.id => out.add;
-        scale => out.add;
-        out.send();
+        out.startMsg("/interpolate, i i i f");
+        l.id => out.addInt;
+        left.id => out.addInt;
+        right.id => out.addInt;
+        scale => out.addFloat;
     }
 
     fun void draw(Latent l) {
-        out.start("/draw");
-        l.id => out.add;
-        out.send();
+        out.startMsg("/draw, i");
+        l.id => out.addInt;
     }
 
     // control the sinosc lfo piecemeal
     fun void sinOsc(Latent source, Latent point1, Latent point2, float phase, float amp) {
-        out.start("/sin_osc");
-        source.id => out.add;
-        point1.id => out.add;
-        point2.id => out.add;
-        phase => out.add;
-        amp => out.add;
-        out.send();
+        out.startMsg("/sin_osc, i i i f f");
+        source.id => out.addInt;
+        point1.id => out.addInt;
+        point2.id => out.addInt;
+        phase => out.addFloat;
+        amp => out.addFloat;
     }
 
     fun void add(Latent source, Latent point1, Latent point2) {
-        out.start("/add");
-        source.id => out.add;
-        point1.id => out.add;
-        point2.id => out.add;
-        out.send();
+        out.startMsg("/add, i i i");
+        source.id => out.addInt;
+        point1.id => out.addInt;
+        point2.id => out.addInt;
     }
 
     fun void mul(Latent source, Latent point1, float scalar) {
-        out.start("/mul");
-        source.id => out.add;
-        point1.id => out.add;
-        scalar => out.add;
-        out.send();
+        out.startMsg("/mul, i i f");
+        source.id => out.addInt;
+        point1.id => out.addInt;
+        scalar => out.addFloat;
     }    
 }

@@ -126,10 +126,6 @@ async def main() -> None:
 
     indices = np.array(indices, dtype= np.uint32)
 
-    print(quad.itemsize * len(quad))
-    print(indices.itemsize * len(indices))
-    print(quad.itemsize * 8)
-
     vertex_shader = """
     #version 330
     in layout(location = 0) vec3 position;
