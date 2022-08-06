@@ -84,7 +84,19 @@ def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None
 
 @log_osc
 def mul(addr: str, args, source_id: int, point1_id: int, scalar: float) -> None:
-    curr_model.mul(source_id, point1_id, scalar)    
+    curr_model.mul(source_id, point1_id, scalar)
+
+@log_osc
+def save_latent(addr: str, args, source_id: id, filepath: str) -> None:
+    curr_model.save_latent(source_id, filepath)
+
+@log_osc
+def load_latent(addr: str, args, filepath: str) -> None:
+    id = curr_model.load_latent(filepath)
+
+    time.sleep(0.01)
+
+    client.send_message('/load/latent/receive', id)
 
 num_images = 1
 
@@ -250,25 +262,27 @@ async def init_main():
     client = SimpleUDPClient(ip, port+1)  # Create client
 
     dispatch = dispatcher.Dispatcher()
-    dispatch.map("/draw", draw, "id")
-    dispatch.map("/face", random_face, "id")
-    dispatch.map("/sin_osc", sin_osc, "source_id", "point1_id", "point2_id", "phase", "amp")
-    dispatch.map("/add", add, "source_id", "point1_id", "point2_id")
-    dispatch.map("/mul", mul, "source_id", "point1_id", "scalar")    
-    dispatch.map("/interpolate", interpolate, "source_id", "left_id", "right_id", "interp")
-    dispatch.map("/make_latent/send", make_latent)
-    dispatch.map("/load/*/send", load, "model_name")
+    dispatch.map('/draw', draw, 'id')
+    dispatch.map('/face', random_face, 'id')
+    dispatch.map('/sin_osc', sin_osc, 'source_id', 'point1_id', 'point2_id', 'phase', 'amp')
+    dispatch.map('/add', add, 'source_id', 'point1_id', 'point2_id')
+    dispatch.map('/mul', mul, 'source_id', 'point1_id', 'scalar')    
+    dispatch.map('/interpolate', interpolate, 'source_id', 'left_id', 'right_id', 'interp')
+    dispatch.map('/make_latent/send', make_latent)
+    dispatch.map('/load/*/send', load, 'model_name')
+    dispatch.map('/latent/load/send', load_latent, 'filepath')
+    dispatch.map('/latent/save', save_latent, 'source_id', 'filepath')
 
     server = osc_server.AsyncIOOSCUDPServer(
         (ip, port), dispatch, asyncio.get_event_loop())
     transport, protocol = await server.create_serve_endpoint()
 
-    logging.info("OSC server is loaded")
+    logging.info('OSC server is loaded')
 
     await main()
 
     transport.close()
-    print("shutting down...")
+    print('shutting down...')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(init_main())
