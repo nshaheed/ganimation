@@ -56,8 +56,8 @@ public class Model {
 
 
     fun Latent@ makeLatent() {
-        in.addAddress("/make_latent/receive, i");
         out.startMsg("/make_latent/send");
+        in.addAddress("/make_latent/receive, i");
 
         <<< "waiting for response" >>>;
         in => now;
@@ -115,5 +115,29 @@ public class Model {
         source.id => out.addInt;
         point1.id => out.addInt;
         scalar => out.addFloat;
-    }    
+    }
+
+    fun Latent@ loadLatent(string filepath) {
+        in.addAddress("/latent/load/receive, i");
+
+        out.startMsg("/make_latent/send, s");
+        filepath => out.addString;
+
+        int id;
+        while(in.recv(msg)) {
+            msg.getInt(0) => id;            
+        }
+
+        Latent l;
+        id => l.id;
+        latents << l;
+
+        return l;
+    }
+
+    fun void saveLatent(Latent l, string filepath) {
+        out.startMsg("/latent/save, i f");
+        l.id => out.addInt;
+        filepath => out.addString;
+    }
 }
