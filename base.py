@@ -216,6 +216,8 @@ async def main() -> None:
             id = curr_model.draw
             generated_images = curr_model.make_image(id)
 
+        await asyncio.sleep(0)
+
         glBindTexture(GL_TEXTURE_2D, texture)
         #texture wrapping params
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
