@@ -35,6 +35,7 @@ public class Model {
         spork~ oscListener();
         out.openBundle(now);
         spork~ driveFrames();
+
         out.startMsg("/load/PGAN/send, s");
         out.addString(model_name);
 
@@ -103,6 +104,7 @@ public class Model {
         Latent l;
         makeLatentStack << l;
 
+        <<< "[makeLatent] waiting for l.loaded..." >>>;
         l.loaded => now;
         return l;
     }

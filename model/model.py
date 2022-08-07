@@ -135,7 +135,6 @@ class StyleGAN3(Model):
     
         # pre-load network
         self.model = self.render_obj.get_network(pkl_address, 'G_ema')
-        self.make_image(self.make_latent())
 
     def size(self) -> (int, int):
         res = self.model.img_resolution
