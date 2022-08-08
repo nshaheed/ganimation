@@ -153,7 +153,7 @@ public class Model {
 
     fun Latent@ loadLatent(string filepath) {
         <<< "about to start message" >>>;
-        out.startMsg("/make_latent/send, s");
+        out.startMsg("/latent/load/send, s");
         filepath => out.addString;
 
         Latent l;

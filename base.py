@@ -93,7 +93,7 @@ def load_latent(addr: str, args, filepath: str) -> None:
     id = curr_model.load_latent(filepath)
 
     logging.info(f'latent id = {id}')
-    client.send_message('/load/latent/receive', filepath, id)
+    client.send_message('/latent/load/receive', [filepath, id])
 
 num_images = 1
 
