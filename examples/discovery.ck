@@ -31,11 +31,53 @@ if( !hi.openKeyboard( device ) ) me.exit();
 m.makeLatent() @=> Latent @ l; // the latent to be randomized
 m.draw(l);
 
+1::second => now;
+
+// make a ConsoleInput
+ConsoleInput in;
+
+fun void savePrompt(Latent l) {
+    me.dir() + "/points/" => string filepath;
+    
+    // prompt
+    in.prompt( "enter line of text:" ) => now;
+
+    in.getLine() => string filename;
+
+    if (filename == "") { return; }
+
+    filepath + filename + ".npy" => filepath;
+
+    m.saveLatent(l, filepath);
+}
+
 while (true) {
-      // 1::second => now;
-      hi => now;
-      
-      m.face(l);
+
+    hi => now;
+    <<< "got kbd input"  >>>;
+
+    // get one or more messages
+    while( hi.recv( msg ) )
+    {
+        // check for action type
+        if( msg.isButtonDown() )
+        {
+            <<< "down:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
+
+            if (msg.which == 57) { // space bar
+                m.face(l);
+            }
+            if (msg.which == 31) { // s key for save
+                savePrompt(l);
+            }
+        }
+
+        else
+        {
+            //<<< "up:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
+        }
+    }
+    // 0.1::second => now;
 }
 
 

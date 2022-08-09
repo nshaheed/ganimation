@@ -73,8 +73,8 @@ def interpolate(addr: str, args, source_id: int, left_id: int, right_id: int, in
     curr_model.interpolate(source_id, left_id, right_id, interp)
 
 @log_osc
-def sin_osc(addr: str, args, source_id: int, point1_id: int, point2_id: int, phase: float, amp: float) -> None:
-    curr_model.sin_osc(source_id, point1_id, point2_id, phase, amp)
+def sin_osc(addr: str, args, source_id: int, point1_id: int, phase: float, amp: float) -> None:
+    curr_model.sin_osc(source_id, point1_id, phase, amp)
 
 @log_osc
 def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
@@ -267,7 +267,7 @@ async def init_main():
     dispatch = dispatcher.Dispatcher()
     dispatch.map('/draw', draw, 'id')
     dispatch.map('/face', random_face, 'id')
-    dispatch.map('/sin_osc', sin_osc, 'source_id', 'point1_id', 'point2_id', 'phase', 'amp')
+    dispatch.map('/sin_osc', sin_osc, 'source_id' , 'point2_id', 'phase', 'amp')
     dispatch.map('/add', add, 'source_id', 'point1_id', 'point2_id')
     dispatch.map('/mul', mul, 'source_id', 'point1_id', 'scalar')    
     dispatch.map('/interpolate', interpolate, 'source_id', 'left_id', 'right_id', 'interp')

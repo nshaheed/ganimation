@@ -128,11 +128,10 @@ public class Model {
     }
 
     // control the sinosc lfo piecemeal
-    fun void sinOsc(Latent source, Latent point1, Latent point2, float phase, float amp) {
-        out.startMsg("/sin_osc, i i i f f");
+    fun void sinOsc(Latent source, Latent point1, float phase, float amp) {
+        out.startMsg("/sin_osc, i i f f");
         source.id => out.addInt;
         point1.id => out.addInt;
-        point2.id => out.addInt;
         phase => out.addFloat;
         amp => out.addFloat;
     }

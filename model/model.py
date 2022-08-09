@@ -90,7 +90,7 @@ class Model:
         """ Set which latent from the model to draw. """
         self.draw = source_id
 
-    def sin_osc(self, source_id: int, point1_id: int, point2_id: int, phase: float = 0, amp: float = 1):
+    def sin_osc(self, source_id: int, point1_id: int, phase: float = 0, amp: float = 1):
         n = self.latent[point1_id]
         n = amp * math.cos(phase) * n
         self.latent[source_id] = n
