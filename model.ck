@@ -19,10 +19,14 @@ public class Model {
 
     OscIn in;
     OscSend out;
+    // There is a bug w/ bundling where the message sometime doesn't get sent at startup I think.
+    // This is for messages that need a response and can stall the program if you don't get one.
+    OscOut outUnbundled;
     OscMsg msg;
 
     recvPort => in.port;
     out.setHost(hostname, sendPort);
+    outUnbundled.dest(hostname, sendPort);
 
     Event modelLoad;
 
@@ -36,8 +40,9 @@ public class Model {
         out.openBundle(now);
         spork~ driveFrames();
 
-        out.startMsg("/load/PGAN/send, s");
-        out.addString(model_name);
+        outUnbundled.start("/load/PGAN/send");
+        model_name => outUnbundled.add;
+        outUnbundled.send();
 
         modelLoad => now;
 
@@ -99,7 +104,8 @@ public class Model {
 
     fun Latent@ makeLatent() {
         <<< "[makeLatent]" >>>;
-        out.startMsg("/make_latent/send");
+
+        outUnbundled.start("/make_latent/send").send();
 
         Latent l;
         makeLatentStack << l;
@@ -152,8 +158,9 @@ public class Model {
 
     fun Latent@ loadLatent(string filepath) {
         <<< "about to start message" >>>;
-        out.startMsg("/latent/load/send, s");
-        filepath => out.addString;
+        outUnbundled.start("/latent/load/send");
+        filepath => outUnbundled.add;
+        outUnbundled.send();
 
         Latent l;
         l @=> latents[filepath];

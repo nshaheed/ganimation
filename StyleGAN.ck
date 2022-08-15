@@ -7,8 +7,9 @@ public class StyleGAN extends Model {
         out.openBundle(now);
         spork~ driveFrames();
 
-        out.startMsg("/load/StyleGAN/send, s");
-        pkl_address => out.addString;
+        outUnbundled.start("/load/StyleGAN/send");
+        pkl_address => outUnbundled.add;
+        outUnbundled.send();
 
         modelLoad => now;
 
