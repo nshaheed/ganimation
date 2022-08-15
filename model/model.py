@@ -75,7 +75,6 @@ class Model:
         result = self.model.test(curr_latent)
         result = result[0].clamp(min=-1, max=1) # chop off any vals not in (-1,1)
         result = result.transpose(0, 2)         # the channel dim should be last
-        result = result.rot90(1,[0,1])          # image needs to be rotated for some reason
         result = torch.add(result, 1)           # scale the image: (-1,1) -> (0,1)
         result = torch.div(result, 2)
         result = np.asarray(result)             # convert to numpy array to feed to texture
@@ -111,6 +110,17 @@ class Model:
         loaded_latent = np.load(filepath)
         loaded_latent = torch.from_numpy(loaded_latent).to(self.device)
         return self.make_latent(arr=loaded_latent)
+
+    def get_quad(self):
+        """ Different models need to be rotated in different ways. Modify the positions values of quads to achieve this. """
+        #           positions    colors          texture coords
+        quad = [    1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                    1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                   -1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+                   -1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+
+        quad = np.array(quad, dtype = np.float32)
+        return quad
 
 
 class StyleGAN3(Model):
@@ -154,7 +164,18 @@ class StyleGAN3(Model):
         self.render_args['latent'] = self.latent[id]
         result = self.render_obj.render(**self.render_args)
 
-        result = result.image.rot90(1,[0,1]).rot90(1,[0,1]) # image needs to be rotated for some reason
+        result = result.image
         result = np.asarray(result)
 
         return result
+
+    def get_quad(self):
+        """ The proper rotations for stylegan. """
+        #           positions    colors          texture coords
+        quad = [    1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                   -1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                   -1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+                    1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+
+        quad = np.array(quad, dtype = np.float32)
+        return quad

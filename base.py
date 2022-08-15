@@ -126,13 +126,6 @@ async def main() -> None:
         return
 
     glfw.make_context_current(window)
-    #           positions    colors          texture coords
-    quad = [   -1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
-                1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
-                1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
-               -1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
-
-    quad = np.array(quad, dtype = np.float32)
 
     indices = [0, 1, 2,
                2, 3, 0]
@@ -167,30 +160,12 @@ async def main() -> None:
     shader = OpenGL.GL.shaders.compileProgram(OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
                                               OpenGL.GL.shaders.compileShader(fragment_shader, GL_FRAGMENT_SHADER))
 
-    VBO = glGenBuffers(1)
-    glBindBuffer(GL_ARRAY_BUFFER, VBO)
-    glBufferData(GL_ARRAY_BUFFER, quad.itemsize * len(quad), quad, GL_STATIC_DRAW)
-
-    EBO = glGenBuffers(1)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.itemsize * len(indices), indices, GL_STATIC_DRAW)
-
-    #position = glGetAttribLocation(shader, "position")
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, quad.itemsize * 8, ctypes.c_void_p(0))
-    glEnableVertexAttribArray(0)
-
-    #color = glGetAttribLocation(shader, "color")
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, quad.itemsize * 8, ctypes.c_void_p(12))
-    glEnableVertexAttribArray(1)
-
-    #texture_coords = glGetAttribLocation(shader, "inTexCoords")
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, quad.itemsize * 8, ctypes.c_void_p(24))
-    glEnableVertexAttribArray(2)
-
     glUseProgram(shader)
 
     glClearColor(1, 1, 1, 1.0)
 
+    EBO = glGenBuffers(1)
+    VBO = glGenBuffers(1)
     texture = glGenTextures(1)
 
     frameCount = 0
@@ -214,9 +189,28 @@ async def main() -> None:
             continue
         with torch.no_grad():
             id = curr_model.draw
-            generated_images = curr_model.make_image(id)
+            generated_image = curr_model.make_image(id)
 
         await asyncio.sleep(0)
+
+        quad = curr_model.get_quad()
+        glBindBuffer(GL_ARRAY_BUFFER, VBO)
+        glBufferData(GL_ARRAY_BUFFER, quad.itemsize * len(quad), quad, GL_STATIC_DRAW)
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.itemsize * len(indices), indices, GL_STATIC_DRAW)
+
+        #position = glGetAttribLocation(shader, "position")
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, quad.itemsize * 8, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(0)
+
+        #color = glGetAttribLocation(shader, "color")
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, quad.itemsize * 8, ctypes.c_void_p(12))
+        glEnableVertexAttribArray(1)
+
+        #texture_coords = glGetAttribLocation(shader, "inTexCoords")
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, quad.itemsize * 8, ctypes.c_void_p(24))
+        glEnableVertexAttribArray(2)        
 
         glBindTexture(GL_TEXTURE_2D, texture)
         #texture wrapping params
@@ -225,11 +219,9 @@ async def main() -> None:
         #texture filtering params
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size[0], size[1], 0, GL_RGB, GL_FLOAT, generated_images)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size[0], size[1], 0, GL_RGB, GL_FLOAT, generated_image)
 
         glClear(GL_COLOR_BUFFER_BIT)
-
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
 
         glfw.swap_buffers(window)
