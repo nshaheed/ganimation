@@ -177,4 +177,9 @@ public class Model {
         l.id => out.addInt;
         filepath => out.addString;
     }
+
+    fun void rotate(int angle) {
+        out.startMsg("/rotate, i");
+        angle => out.addInt;
+    }
 }

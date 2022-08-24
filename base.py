@@ -95,6 +95,15 @@ def load_latent(addr: str, args, filepath: str) -> None:
     logging.info(f'latent id = {id}')
     client.send_message('/latent/load/receive', [filepath, id])
 
+@log_osc
+def rotate(addr: str, args, angle: int) -> None:
+    angle = angle % 360
+
+    if angle % 90 != 0:
+        logging.error('wrong angle, must be one of {0, 90, 180, 270}')
+
+    curr_model.rotate = angle
+
 num_images = 1
 
 ip = "127.0.0.1"
@@ -267,6 +276,7 @@ async def init_main():
     dispatch.map('/load/*/send', load, 'model_name')
     dispatch.map('/latent/load/send', load_latent, 'filepath')
     dispatch.map('/latent/save', save_latent, 'source_id', 'filepath')
+    dispatch.map('/rotate', rotate, 'angle')
 
     server = osc_server.AsyncIOOSCUDPServer(
         (ip, port), dispatch, asyncio.get_event_loop())

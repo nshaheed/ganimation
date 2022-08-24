@@ -2,6 +2,7 @@
 
 StyleGAN m;
 m.init(me.dir() + "../../lia_models/Face-Hands_Lia-Coleman.pkl");
+m.rotate(180);
 
 // init latents
 m.makeLatent() @=> Latent draw;

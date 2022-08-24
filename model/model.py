@@ -20,6 +20,8 @@ class Model:
     id_counter = 0
     latent = None
 
+    rotate = 0
+
     draw = None # which latent to draw
 
     def __init__(self):
@@ -113,11 +115,34 @@ class Model:
 
     def get_quad(self):
         """ Different models need to be rotated in different ways. Modify the positions values of quads to achieve this. """
-        #           positions    colors          texture coords
-        quad = [    1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
-                    1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
-                   -1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
-                   -1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+        quad = None
+        match self.rotate:
+            case 0:
+                #           positions    colors          texture coords
+                quad = [    1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                            1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                           -1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+                           -1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+            case 90:
+                #           positions    colors          texture coords
+                quad = [    1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                           -1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                           -1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+                            1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+            case 180:
+                #           positions    colors          texture coords
+                quad = [   -1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                           -1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                            1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+                            1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+            case 270:
+                #           positions    colors          texture coords
+                quad = [   -1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
+                            1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
+                            1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
+                           -1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+            case _:
+                logging.error('wrong angle, must be one of {0, 90, 180, 270}')
 
         quad = np.array(quad, dtype = np.float32)
         return quad
@@ -131,6 +156,8 @@ class StyleGAN3(Model):
     pkl = None
     render_obj = None
     render_args = None
+
+    rotate = 270
 
     def __init__(self):
         self.latent = {}
@@ -168,14 +195,3 @@ class StyleGAN3(Model):
         result = np.asarray(result)
 
         return result
-
-    def get_quad(self):
-        """ The proper rotations for stylegan. """
-        #           positions    colors          texture coords
-        quad = [    1,  1, 0.0,  1.0, 1.0, 1.0,  0.0, 0.0,
-                   -1,  1, 0.0,  1.0, 1.0, 1.0,  1.0, 0.0,
-                   -1, -1, 0.0,  1.0, 1.0, 1.0,  1.0, 1.0,
-                    1, -1, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
-
-        quad = np.array(quad, dtype = np.float32)
-        return quad
