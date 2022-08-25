@@ -7,6 +7,7 @@ m.rotate(180);
 // init latents
 m.makeLatent() @=> Latent draw;
 m.loadLatent(me.dir() + "/points/hands_covering_face.npy") @=> Latent left;
+// m.makeLatent() @=> Latent left;
 m.makeLatent() @=> Latent right;
 m.makeLatent() @=> Latent intp;
 m.makeLatent() @=> Latent noise;
