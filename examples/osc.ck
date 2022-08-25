@@ -86,7 +86,7 @@ fun void rotate() {
     0 => int counter;
     while (true) {
         if (counter % 2 == 0) {
-            m.sinOsc(osc, left, right, s.last(), scale * (amp.last()+1.01));
+            m.sinOsc(osc, left, s.last(), scale * (amp.last()+1.01));
         }
         m.add(draw, intp, osc);
         // m.draw(osc);

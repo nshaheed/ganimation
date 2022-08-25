@@ -21,27 +21,6 @@ m.face(right);
 spork~ rotate();
 spork~ interpolate();
 1::week => now;
-// while( true )
-// {
-//     m.face(right);
-//     // frequency
-//     while (s.freq() == prevFreq) {
-//         Std.mtof( 33 + Math.random2(0,3) * 12 +
-//           hi[Math.random2(0,hi.size()-1)] ) => s.freq;
-//     }
-//     s.freq() => prevFreq;  
-
-//     // harmonics
-//     Math.random2( 1, 5 ) => s.harmonics;
-    
-//     Math.randomf() => float chance;
-//     if (chance > 0.25) {
-//         120::ms => now;
-//     } else {
-//         // updateSide();
-//         240::ms => now;
-//     }
-// }
 
 fun void updateSide() {
     m.face(left);
@@ -65,7 +44,7 @@ fun void rotate() {
     // draw @=> osc;
     now + 10::second => time then;
     while (now < then) {
-        m.sinOsc(osc, left, right, s.last(), scale * (amp.last()+1.01));
+        m.sinOsc(osc, left, s.last(), scale * (amp.last()+1.01));
         m.add(draw, intp, osc);
         // m.draw(osc);
         framerate => now;
@@ -82,10 +61,4 @@ fun void interpolate() {
             delta +=> pos;
             framerate => now;
         }
-
-        // while (pos >= 0) {
-        //     m.interpolate(intp, left, right, pos);
-        //     delta -=> pos;
-        //     framerate => now;
-        // }
 }
