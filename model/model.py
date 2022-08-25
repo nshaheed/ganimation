@@ -99,8 +99,14 @@ class Model:
     def add(self, source_id: int, point1_id: int, point2_id: int):
         self.latent[source_id] = self.latent[point1_id] + self.latent[point2_id]
 
+    def sub(self, source_id: int, point1_id: int, point2_id: int):
+        self.latent[source_id] = self.latent[point1_id] - self.latent[point2_id]
+
     def mul(self, source_id: int, point1_id: int, scalar: float):
         self.latent[source_id] = scalar * self.latent[point1_id]
+
+    def mul(self, source_id: int, point1_id: int, scalar: float):
+        self.latent[source_id] = self.latent[point1_id] / scalar
 
     # save latent to file
     def save_latent(self, source_id: int, filepath: str):

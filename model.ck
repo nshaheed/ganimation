@@ -149,8 +149,22 @@ public class Model {
         point2.id => out.addInt;
     }
 
+    fun void sub(Latent source, Latent point1, Latent point2) {
+        out.startMsg("/sub, i i i");
+        source.id => out.addInt;
+        point1.id => out.addInt;
+        point2.id => out.addInt;
+    }
+
     fun void mul(Latent source, Latent point1, float scalar) {
         out.startMsg("/mul, i i f");
+        source.id => out.addInt;
+        point1.id => out.addInt;
+        scalar => out.addFloat;
+    }
+
+    fun void div(Latent source, Latent point1, float scalar) {
+        out.startMsg("/div, i i f");
         source.id => out.addInt;
         point1.id => out.addInt;
         scalar => out.addFloat;

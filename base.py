@@ -81,8 +81,16 @@ def add(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None
     curr_model.add(source_id, point1_id, point2_id)
 
 @log_osc
+def sub(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
+    curr_model.sub(source_id, point1_id, point2_id)
+
+@log_osc
 def mul(addr: str, args, source_id: int, point1_id: int, scalar: float) -> None:
     curr_model.mul(source_id, point1_id, scalar)
+
+@log_osc
+def div(addr: str, args, source_id: int, point1_id: int, point2_id: int) -> None:
+    curr_model.div(source_id, point1_id, point2_id)
 
 @log_osc
 def save_latent(addr: str, args, source_id: id, filepath: str) -> None:
@@ -270,7 +278,9 @@ async def init_main():
     dispatch.map('/face', random_face, 'id')
     dispatch.map('/sin_osc', sin_osc, 'source_id' , 'point2_id', 'phase', 'amp')
     dispatch.map('/add', add, 'source_id', 'point1_id', 'point2_id')
-    dispatch.map('/mul', mul, 'source_id', 'point1_id', 'scalar')    
+    dispatch.map('/sub', sub, 'source_id', 'point1_id', 'point2_id')
+    dispatch.map('/mul', mul, 'source_id', 'point1_id', 'scalar')
+    dispatch.map('/div', div, 'source_id', 'point1_id', 'scalar')
     dispatch.map('/interpolate', interpolate, 'source_id', 'left_id', 'right_id', 'interp')
     dispatch.map('/make_latent/send', make_latent)
     dispatch.map('/load/*/send', load, 'model_name')
