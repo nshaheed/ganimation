@@ -105,7 +105,7 @@ class Model:
     def mul(self, source_id: int, point1_id: int, scalar: float):
         self.latent[source_id] = scalar * self.latent[point1_id]
 
-    def mul(self, source_id: int, point1_id: int, scalar: float):
+    def div(self, source_id: int, point1_id: int, scalar: float):
         self.latent[source_id] = self.latent[point1_id] / scalar
 
     # save latent to file
