@@ -1,5 +1,14 @@
-// basic example of interpolating between two faces
+// perf of face-hands with lia coleman's model
 
+// set up args
+false => int rec;
+for (int i; i < me.args(); i++) {
+    if (me.arg(i) == "rec") {
+        true => rec;
+    }
+}
+
+// set up latents
 StyleGAN m;
 m.init(me.dir() + "../../lia_models/Face-Hands_Lia-Coleman.pkl");
 m.rotate(180);
@@ -18,6 +27,7 @@ m.draw(draw);
 
 (1/15.0)::second => dur framerate; // 24 fps
 
+// set up signal graph
 Envelope master => dac;
 1.0 => master.value;
 10::ms => master.duration;
@@ -25,6 +35,7 @@ Envelope master => dac;
 BlitSquare s => JCRev r => master;
 Blit b => Envelope e1 => Pan2 bPan => Envelope e => GVerb g => master;
 Blit b2 => Envelope e2 => e;
+
 64 => Std.mtof => b.freq => b2.freq;
 
 3 => b2.harmonics;
@@ -68,6 +79,24 @@ m.face(right);
 0 => int minOct;
 
 0 => int pluckStage;
+
+// manage track recordings
+if (rec) {
+    s   => WvOut2 blitSquare => blackhole;
+    e   => WvOut2 blits      => blackhole;
+    pan => WvOut2 perc       => blackhole;
+
+    // auto adds datetime to filename
+    "special:auto" => blitSquare.wavFilename => blits.wavFilename => perc.wavFilename;
+
+    // prefix filename with stem name
+    "blitSquare" => blitSquare.autoPrefix;
+    "blits" => blits.autoPrefix;
+    "perc" => perc.autoPrefix;
+
+    // needed to close file atm
+    null @=> blitSquare => blits => perc;
+}
 
 spork~ rotate();
 spork~ interpolate();
