@@ -4,6 +4,8 @@ import time
 import logging
 import asyncio
 
+from gooey import Gooey
+
 from pythonosc import dispatcher, osc_server
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
@@ -251,14 +253,19 @@ async def main() -> None:
 
 client = None
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
-parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
-parser.add_argument('-t', '--test', help='testing mode, don\'t render images', action='store_true')
-args = parser.parse_args()
+args = None
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
+@Gooey
 async def init_main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
+    parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
+    parser.add_argument('-t', '--test', help='testing mode, don\'t render images', action='store_true')
+
+    global args
+    args = parser.parse_args()
+
     # set up logging
     if args.debug:
         level = logging.DEBUG
