@@ -123,7 +123,7 @@ curr_model = None
 latent = None
 
 ###### OpenGL stuff ######
-async def main(test, framerate, **kwargs) -> None:
+async def draw_loop(test, framerate, **kwargs) -> None:
     # initialize glfw
     if not glfw.init():
         return
@@ -255,7 +255,7 @@ client = None
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
 @Gooey
-async def init_main():
+async def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
     parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
@@ -298,10 +298,10 @@ async def init_main():
 
     logging.info('OSC server is loaded')
 
-    await main(**vars(args))
+    await draw_loop(**vars(args))
 
     transport.close()
     print('shutting down...')
 
 if __name__ == '__main__':
-    asyncio.run(init_main())
+    asyncio.run(main())
