@@ -123,7 +123,7 @@ curr_model = None
 latent = None
 
 ###### OpenGL stuff ######
-async def main() -> None:
+async def main(test, framerate, **kwargs) -> None:
     # initialize glfw
     if not glfw.init():
         return
@@ -134,7 +134,7 @@ async def main() -> None:
     logging.info("Model loaded!")
 
     # stall the render loop if in test mode
-    while args.test:
+    while test:
         await asyncio.sleep(1.0)
 
     size = curr_model.size()
@@ -193,7 +193,7 @@ async def main() -> None:
     while not glfw.window_should_close(window):
         await asyncio.sleep(0) # this needs to be before poll events
 
-        if args.framerate:
+        if framerate:
             currentTime = glfw.get_time()
             frameCount += 1
 
@@ -253,8 +253,6 @@ async def main() -> None:
 
 client = None
 
-args = None
-
 # init_main sets up all the osc/opengl coroutines and closes things properly
 @Gooey
 async def init_main():
@@ -263,7 +261,6 @@ async def init_main():
     parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
     parser.add_argument('-t', '--test', help='testing mode, don\'t render images', action='store_true')
 
-    global args
     args = parser.parse_args()
 
     # set up logging
@@ -301,7 +298,7 @@ async def init_main():
 
     logging.info('OSC server is loaded')
 
-    await main()
+    await main(**vars(args))
 
     transport.close()
     print('shutting down...')
