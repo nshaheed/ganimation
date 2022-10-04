@@ -254,9 +254,11 @@ async def draw_loop(test, framerate, **kwargs) -> None:
 client = None
 
 # init_main sets up all the osc/opengl coroutines and closes things properly
-@Gooey
+@Gooey(
+    program_name='GANimator'
+)
 async def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='image renering server for GANimator')
     parser.add_argument('-d', '--debug', help='print debug logging', action='store_true')
     parser.add_argument('-f', '--framerate', help='print frame info', action='store_true')
     parser.add_argument('-t', '--test', help='testing mode, don\'t render images', action='store_true')
