@@ -17,18 +17,17 @@ public class Model {
     5005 => int sendPort;
     5006 => int recvPort;
 
-    OscIn in;
     OscSend out;
     // There is a bug w/ bundling where the message sometime doesn't get sent at startup I think.
     // This is for messages that need a response and can stall the program if you don't get one.
     OscOut outUnbundled;
-    OscMsg msg;
 
-    recvPort => in.port;
     out.setHost(hostname, sendPort);
     outUnbundled.dest(hostname, sendPort);
 
     Event modelLoad;
+
+    false => int headless; // headless mode
 
     // just load the default model
     fun void init() {
@@ -36,9 +35,17 @@ public class Model {
     }
 
     fun void init(string model_name) {
+        if (headless) {
+           spork~ oscReceiver();
+        }
+
         spork~ oscListener();
         out.openBundle(now);
         spork~ driveFrames();
+
+        // in the case of headless mode, need to set up
+        // the receiver before trying to do any osc calls
+        me.yield();
 
         outUnbundled.start("/load/PGAN/send");
         model_name => outUnbundled.add;
@@ -47,12 +54,6 @@ public class Model {
         modelLoad => now;
 
         <<< "loaded model" >>>;
-    }
-
-    fun OscIn makeOscIn() {
-        OscIn newIn;
-        recvPort => in.port;
-        return newIn;
     }
 
     // Bundles all messages on a per-frame basis. This improves
@@ -71,7 +72,11 @@ public class Model {
 
     // listen for all osc messages from python backend and process
     fun void oscListener() {
-    	in.listenAll();
+        OscIn in;
+        recvPort => in.port;
+        in.listenAll();
+
+        OscMsg msg;
 
 	while(true) {
 	    in => now;
@@ -92,6 +97,43 @@ public class Model {
 		}
 
 		if (msg.address == "/latent/load/receive") {
+                   msg.getString(0) => string filepath;
+                   msg.getInt(1) => int id;
+
+                   id => latents[filepath].id;
+                   latents[filepath].loaded.broadcast();
+		}
+	    }
+	}
+    }
+
+    // listen for all osc messages from python backend and process
+    fun void oscReceiver() {
+        OscIn in;
+        sendPort => in.port;
+        in.listenAll();
+
+        OscMsg msg;
+
+	while(true) {
+            in => now;
+	    while(in.recv(msg)) {
+
+                // <<< "got message from", msg.address >>>;
+	        if (RegEx.match("/load/.*/send", msg.address)) {
+		   modelLoad.broadcast();
+		}
+
+		if (msg.address == "/make_latent/send") {
+                   msg.getInt(0) => int id;
+
+                   makeLatentStack[makeLatentStack.size()-1] @=> Latent l;
+                   makeLatentStack.popBack();
+                   id => l.id;
+                   l.loaded.broadcast();
+		}
+
+		if (msg.address == "/latent/load/send") {
                    msg.getString(0) => string filepath;
                    msg.getInt(1) => int id;
 

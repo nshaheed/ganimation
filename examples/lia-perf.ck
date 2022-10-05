@@ -10,6 +10,7 @@ for (int i; i < me.args(); i++) {
 
 // set up latents
 StyleGAN m;
+true => m.headless;
 m.init(me.dir() + "../../lia_models/Face-Hands_Lia-Coleman.pkl");
 m.rotate(180);
 
