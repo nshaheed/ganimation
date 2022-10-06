@@ -81,6 +81,8 @@ m.face(right);
 
 0 => int pluckStage;
 
+1.0 => float doubleTime;
+
 // manage track recordings
 if (rec) {
     s   => WvOut2 blitSquare => blackhole;
@@ -172,7 +174,12 @@ while( true )
     
     Math.randomf() => float chance;
     if (chance > 0.25) {
-        120::ms => now;
+        if (pluckStage == 2) {
+            120*doubleTime::ms => now;
+        } else {
+            120::ms => now;
+        }
+
         if (pluckStage == 1) {
             bwg.pluck(1.0);
         }
@@ -187,13 +194,13 @@ while( true )
             }
             
             if (odds >= 0.5) {
-                120::ms => now;
+                120*doubleTime::ms => now;
                 Math.random2f( .7, 1 ) => bwg.pluck;
                 m.face(right);
-                120::ms => now;
+                120*doubleTime::ms => now;
                 Math.random2f( .7, 1 ) => bwg.pluck;
             } else {
-                240::ms => now;
+                240*doubleTime::ms => now;
                 Math.random2f( .7, 1 ) => bwg.pluck;
             }
         } else {
@@ -317,6 +324,14 @@ fun void manageMidi() {
 
                 if (e.value() == 1.0) {
                     e.keyOff();
+                }
+            }
+
+            if (msg.data2 == 1000 && msg.data3 > 0) { // go into double time (TODO map to button)
+                if (doubleTime == 1.0) {
+                   doubleTime = 0.5;
+                } else {
+                   doubleTime = 1.0;
                 }
             }
 
