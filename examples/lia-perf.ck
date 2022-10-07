@@ -29,13 +29,35 @@ m.draw(draw);
 (1/15.0)::second => dur framerate; // 24 fps
 
 // set up signal graph
-Envelope master => dac;
-1.0 => master.value;
-10::ms => master.duration;
+Envelope masterLeft => dac.chan(0);
+Envelope masterRight => dac.chan(1);
+1.0 => masterLeft.value => masterRight.value;
+10::ms => masterLeft.duration => masterRight.duration;
 
-BlitSquare s => JCRev r => master;
-Blit b => Envelope e1 => Pan2 bPan => Envelope e => GVerb g => master;
-Blit b2 => Envelope e2 => e;
+// SinOsc sinosc => masterLeft => masterRight;
+
+GVerb g;
+g.chan(0) => masterLeft;
+g.chan(1) => masterRight;
+Envelope eLeft => g.chan(0);
+Envelope eRight => g.chan(1);
+
+BlitSquare s => NRev r => dac; // => masterLeft => masterRight;
+// r => masterLeft;
+// r => masterRight;
+// s => masterLeft;
+// s => masterRight;
+// s => dac;
+r => dac;
+// <<< "right.val", masterRight.value() >>>;
+
+Blit b => Envelope e1 => Pan2 bPan;
+bPan => eLeft;
+bPan => eRight;
+Blit b2 => Envelope e2 => eLeft;
+e2 => eRight;
+
+0.0 => r.gain => e1.gain => e2.gain;
 
 64 => Std.mtof => b.freq => b2.freq;
 
@@ -54,7 +76,7 @@ Blit b2 => Envelope e2 => e;
 
 0.2 => b.gain;
 0.1 => b2.gain;
-3::second => e.duration;
+3::second => eLeft.duration => eRight.duration;
 
 0 => int envDir;
 0.9 => float minPos;
@@ -67,9 +89,16 @@ Blit b2 => Envelope e2 => e;
 -1.0 => float prevFreqB;
 // infinite time loop
 
-BandedWG bwg => Gain gain => Pan2 pan => JCRev rev => master;
+BandedWG bwg => Gain gain => Pan2 pan => JCRev rev;
+r => masterLeft;
+r => masterRight;
+
+BandedWG bwg2 => gain;
+
 1 => gain.gain;
-1 => bwg.gain;
+0.8 => bwg.gain;
+0.2 => bwg2.gain;
+
 0.3 => rev.mix;
 
 1.0 => float pos; // interpolate pos
@@ -84,22 +113,22 @@ m.face(right);
 1.0 => float doubleTime;
 
 // manage track recordings
-if (rec) {
-    s   => WvOut2 blitSquare => blackhole;
-    e   => WvOut2 blits      => blackhole;
-    pan => WvOut2 perc       => blackhole;
+// if (rec) {
+//     s   => WvOut2 blitSquare => blackhole;
+//     e   => WvOut2 blits      => blackhole;
+//     pan => WvOut2 perc       => blackhole;
 
-    // auto adds datetime to filename
-    "special:auto" => blitSquare.wavFilename => blits.wavFilename => perc.wavFilename;
+//     // auto adds datetime to filename
+//     "special:auto" => blitSquare.wavFilename => blits.wavFilename => perc.wavFilename;
 
-    // prefix filename with stem name
-    "blitSquare" => blitSquare.autoPrefix;
-    "blits" => blits.autoPrefix;
-    "perc" => perc.autoPrefix;
+//     // prefix filename with stem name
+//     "blitSquare" => blitSquare.autoPrefix;
+//     "blits" => blits.autoPrefix;
+//     "perc" => perc.autoPrefix;
 
-    // needed to close file atm
-    null @=> blitSquare => blits => perc;
-}
+//     // needed to close file atm
+//     null @=> blitSquare => blits => perc;
+// }
 
 spork~ rotate();
 spork~ interpolate();
@@ -138,7 +167,6 @@ while( true )
         }
 
         Std.mtof( 33 + currOct * 12 + currDeg ) => s.freq;
-        
     }
     s.freq() => prevFreq;
 
@@ -175,13 +203,21 @@ while( true )
     Math.randomf() => float chance;
     if (chance > 0.25) {
         if (pluckStage == 2) {
-            120*doubleTime::ms => now;
+            if (chance > 0.9) {
+                spork~ auxPercSeq();
+            }
+
+            120::ms => now;
         } else {
             120::ms => now;
         }
 
-        if (pluckStage == 1) {
+        if (pluckStage == 1 || pluckStage == 2) {
             bwg.pluck(1.0);
+        }
+
+        if (pluckStage == 2) {
+            spork~ auxPerc();
         }
     } else {
         if (pluckStage == 2) {
@@ -194,17 +230,21 @@ while( true )
             }
             
             if (odds >= 0.5) {
-                120*doubleTime::ms => now;
+                120::ms => now;
                 Math.random2f( .7, 1 ) => bwg.pluck;
+                spork~ auxPerc();
                 m.face(right);
-                120*doubleTime::ms => now;
+                120::ms => now;
+                Math.random2f( .7, .9 ) => bwg2.pluck;
                 Math.random2f( .7, 1 ) => bwg.pluck;
+                spork~ auxPerc();
             } else {
                 240*doubleTime::ms => now;
                 Math.random2f( .7, 1 ) => bwg.pluck;
             }
+
         } else {
-            240::ms => now;
+            240*doubleTime::ms => now;
         }
 
         if (pluckStage == 0) {
@@ -249,7 +289,7 @@ fun void interpolate() {
         while (pos <= 1) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
-            if (e1Flag & e.value() != 0.0) {
+            if (e1Flag & eLeft.value() != 0.0) {
                 currPos - 1 => currPos;
             }
 
@@ -263,7 +303,7 @@ fun void interpolate() {
         while (pos >= 0.0) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
-            if (e1Flag && e.value() != 0.0) {
+            if (e1Flag && eLeft.value() != 0.0) {
                 currPos - 1 => currPos;
             }
             m.interpolate(intp, left, right, currPos);
@@ -318,27 +358,100 @@ fun void manageMidi() {
             }
 
             if (msg.data2 == 41 && msg.data3 > 0) { // hit the blit env
-                if (e.value() == 0.0) {
-                    e.keyOn();
+                if (eLeft.value() == 0.0) {
+                    eLeft.keyOn();
+                    eRight.keyOn();
                 }
 
-                if (e.value() == 1.0) {
-                    e.keyOff();
+                if (eLeft.value() == 1.0) {
+                    eLeft.keyOff();
+                    eRight.keyOff();
                 }
             }
 
-            if (msg.data2 == 1000 && msg.data3 > 0) { // go into double time (TODO map to button)
+            if (msg.data2 == 42 && msg.data3 > 0) { // go into double time (TODO map to button)
                 if (doubleTime == 1.0) {
-                   doubleTime = 0.5;
+                   0.5 => doubleTime;
                 } else {
-                   doubleTime = 1.0;
+                   1.0 => doubleTime;
                 }
             }
 
             if (msg.data2 == 77) { // adjust volume of global beat
-                scale(0, 127, 0.0, 1.0, msg.data3) => master.target;
-                master.keyOn();
+                scale(0, 127, 0.0, 1.0, msg.data3) => masterLeft.target => masterRight.target;
+                masterLeft.keyOn();
+                masterRight.keyOn();
+
+                <<< "masterleft.val", masterLeft.value() >>>;
             }
         }
+    }
+}
+
+fun void auxPerc() {
+    if (doubleTime == 1.0) return;
+
+    ModalBar bar => LPF lpf => Pan2 barPan => GVerb gverb;
+    gverb.chan(0) => eLeft;
+    gverb.chan(1) => eRight;
+    
+    800 * 4 => lpf.freq;
+    Math.random2f(0.4, 0.8) => barPan.pan;
+    1 => barPan.pan;
+    // e => dac;
+
+    if (Math.randomf() > 0.5) {
+        -1.0 * barPan.pan() => barPan.pan;
+    }
+    
+    // ModalBar bar => gain;
+
+    [1, 2, 3, 5] @=> int presets[];
+    presets[Math.random2(0,presets.size()-1)] => bar.preset;
+    3 => bar.preset;
+
+    Math.random2f( 0, 0.2 ) => bar.stickHardness;
+    Math.random2f( 0, 0.2 ) => bar.strikePosition;
+    Math.random2f( 0, 1 ) => bar.vibratoGain;
+    Math.random2f( 0, 60 ) => bar.vibratoFreq;
+    Math.random2f( 0, 1 ) => bar.volume;
+    Math.random2f( .5, 1 ) => bar.directGain;
+    // Math.random2f( .3, 0.6 ) => bar.masterGain;
+    Math.random2f( .7, 1.0 ) => bar.masterGain;
+
+    0.8 => bar.gain;
+
+    // set freq
+    // scale[Math.random2(0,scale.size()-1)] => int winner;
+    // 57 + Math.random2(0,2)*12 + winner => Std.mtof => bar.freq;
+
+    (Math.floor(maxOct)) $ int => int maxOctFloor;
+    (Math.floor(scale(0, 1, 0, hi.size(), maxOct - maxOctFloor))) $ int => int scaleDeg;
+
+
+    int currDeg;
+    hi[Math.random2(0,scaleDeg)] => currDeg;
+    // if (currOct >= 1 && currOct == maxOctFloor) {
+    //     // limit scale degree options if it's the top octave
+    //     hi[Math.random2(0,scaleDeg)] => currDeg;
+    // } else {
+    //     hi[Math.random2(0,hi.size()-1)] => currDeg;
+    // }
+
+    // 33 + scaleDeg => Std.mtof => bar.freq;
+    33 + 36 + currDeg => Std.mtof => bar.freq;
+    <<< "freq", bar.freq() >>>;
+    // 20 => bar.freq;
+    // go
+    .8 => bar.noteOn;
+
+    // advance time
+    .5::second => now;
+}
+
+fun void auxPercSeq() {
+     for (0 => int i; i < Math.random2(3,8); i++) {
+        spork~ auxPerc();
+        120::ms => now;
     }
 }
