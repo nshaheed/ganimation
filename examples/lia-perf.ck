@@ -29,35 +29,13 @@ m.draw(draw);
 (1/15.0)::second => dur framerate; // 24 fps
 
 // set up signal graph
-Envelope masterLeft => dac.chan(0);
-Envelope masterRight => dac.chan(1);
-1.0 => masterLeft.value => masterRight.value;
-10::ms => masterLeft.duration => masterRight.duration;
+Envelope master => dac;
+1.0 => master.value;
+10::ms => master.duration;
 
-// SinOsc sinosc => masterLeft => masterRight;
-
-GVerb g;
-g.chan(0) => masterLeft;
-g.chan(1) => masterRight;
-Envelope eLeft => g.chan(0);
-Envelope eRight => g.chan(1);
-
-BlitSquare s => NRev r => dac; // => masterLeft => masterRight;
-// r => masterLeft;
-// r => masterRight;
-// s => masterLeft;
-// s => masterRight;
-// s => dac;
-r => dac;
-// <<< "right.val", masterRight.value() >>>;
-
-Blit b => Envelope e1 => Pan2 bPan;
-bPan => eLeft;
-bPan => eRight;
-Blit b2 => Envelope e2 => eLeft;
-e2 => eRight;
-
-0.0 => r.gain => e1.gain => e2.gain;
+BlitSquare s => JCRev r => master;
+Blit b => Envelope e1 => Pan2 bPan => Envelope e => GVerb g => master;
+Blit b2 => Envelope e2 => e;
 
 64 => Std.mtof => b.freq => b2.freq;
 
@@ -76,7 +54,7 @@ e2 => eRight;
 
 0.2 => b.gain;
 0.1 => b2.gain;
-3::second => eLeft.duration => eRight.duration;
+3::second => e.duration;
 
 0 => int envDir;
 0.9 => float minPos;
@@ -89,9 +67,7 @@ e2 => eRight;
 -1.0 => float prevFreqB;
 // infinite time loop
 
-BandedWG bwg => Gain gain => Pan2 pan => JCRev rev;
-r => masterLeft;
-r => masterRight;
+BandedWG bwg => Gain gain => Pan2 pan => JCRev rev => master;
 
 BandedWG bwg2 => gain;
 
@@ -289,7 +265,7 @@ fun void interpolate() {
         while (pos <= 1) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
-            if (e1Flag & eLeft.value() != 0.0) {
+            if (e1Flag & e.value() != 0.0) {
                 currPos - 1 => currPos;
             }
 
@@ -303,7 +279,7 @@ fun void interpolate() {
         while (pos >= 0.0) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
-            if (e1Flag && eLeft.value() != 0.0) {
+            if (e1Flag && e.value() != 0.0) {
                 currPos - 1 => currPos;
             }
             m.interpolate(intp, left, right, currPos);
@@ -358,14 +334,14 @@ fun void manageMidi() {
             }
 
             if (msg.data2 == 41 && msg.data3 > 0) { // hit the blit env
-                if (eLeft.value() == 0.0) {
-                    eLeft.keyOn();
-                    eRight.keyOn();
+                if (e.value() == 0.0) {
+                    e.keyOn();
+                    e.keyOn();
                 }
 
-                if (eLeft.value() == 1.0) {
-                    eLeft.keyOff();
-                    eRight.keyOff();
+                if (e.value() == 1.0) {
+                    e.keyOff();
+                    e.keyOff();
                 }
             }
 
@@ -378,11 +354,8 @@ fun void manageMidi() {
             }
 
             if (msg.data2 == 77) { // adjust volume of global beat
-                scale(0, 127, 0.0, 1.0, msg.data3) => masterLeft.target => masterRight.target;
-                masterLeft.keyOn();
-                masterRight.keyOn();
-
-                <<< "masterleft.val", masterLeft.value() >>>;
+                scale(0, 127, 0.0, 1.0, msg.data3) => master.target;
+                master.keyOn();
             }
         }
     }
@@ -391,9 +364,9 @@ fun void manageMidi() {
 fun void auxPerc() {
     if (doubleTime == 1.0) return;
 
-    ModalBar bar => LPF lpf => Pan2 barPan => GVerb gverb;
-    gverb.chan(0) => eLeft;
-    gverb.chan(1) => eRight;
+    ModalBar bar => LPF lpf => Pan2 barPan => GVerb gverb => e;
+    // gverb.chan(0) => eLeft;
+    // gverb.chan(1) => eRight;
     
     800 * 4 => lpf.freq;
     Math.random2f(0.4, 0.8) => barPan.pan;
