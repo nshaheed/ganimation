@@ -33,9 +33,27 @@ Envelope master => dac;
 1.0 => master.value;
 10::ms => master.duration;
 
-BlitSquare s => JCRev r => master;
-Blit b => Envelope e1 => Pan2 bPan => Envelope e => GVerb g => master;
-Blit b2 => Envelope e2 => e;
+Envelope masterLeft => dac.left;
+Envelope masterRight => dac.right;
+1.0 => masterLeft.value => masterRight.value;
+10::ms => masterLeft.duration => masterRight.duration;
+
+BlitSquare s => JCRev r => masterLeft;
+r => masterRight;
+// Blit b => Envelope e1 => Pan2 bPan => Envelope e => GVerb g => master;
+Blit b => Envelope e1 => Pan2 bPan;
+GVerb g;
+g.chan(0) => masterLeft;
+g.chan(1) => masterRight;
+Envelope eLeft => g.chan(0);
+Envelope eRight => g.chan(1);
+bPan.left => eLeft;
+bPan.right => eRight;
+
+Blit b2 => Envelope e2 => eLeft;
+e2 => eRight;
+
+// 0 => r.gain => e1.gain => e2.gain;
 
 64 => Std.mtof => b.freq => b2.freq;
 
@@ -54,7 +72,7 @@ Blit b2 => Envelope e2 => e;
 
 0.2 => b.gain;
 0.1 => b2.gain;
-3::second => e.duration;
+3::second => eLeft.duration => eRight.duration;
 
 0 => int envDir;
 0.9 => float minPos;
@@ -265,7 +283,7 @@ fun void interpolate() {
         while (pos <= 1) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
-            if (e1Flag & e.value() != 0.0) {
+            if (e1Flag & eLeft.value() != 0.0) {
                 currPos - 1 => currPos;
             }
 
@@ -279,7 +297,7 @@ fun void interpolate() {
         while (pos >= 0.0) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
-            if (e1Flag && e.value() != 0.0) {
+            if (e1Flag && eLeft.value() != 0.0) {
                 currPos - 1 => currPos;
             }
             m.interpolate(intp, left, right, currPos);
@@ -334,14 +352,14 @@ fun void manageMidi() {
             }
 
             if (msg.data2 == 41 && msg.data3 > 0) { // hit the blit env
-                if (e.value() == 0.0) {
-                    e.keyOn();
-                    e.keyOn();
+                if (eLeft.value() == 0.0) {
+                    eLeft.keyOn();
+                    eRight.keyOn();
                 }
 
-                if (e.value() == 1.0) {
-                    e.keyOff();
-                    e.keyOff();
+                if (eLeft.value() == 1.0) {
+                    eLeft.keyOff();
+                    eRight.keyOff();
                 }
             }
 
@@ -364,13 +382,13 @@ fun void manageMidi() {
 fun void auxPerc() {
     if (doubleTime == 1.0) return;
 
-    ModalBar bar => LPF lpf => Pan2 barPan => GVerb gverb => e;
-    // gverb.chan(0) => eLeft;
-    // gverb.chan(1) => eRight;
+    ModalBar bar => LPF lpf => Pan2 barPan => GVerb gverb;
+    gverb.chan(0) => eLeft;
+    gverb.chan(1) => eRight;
     
     800 * 4 => lpf.freq;
     Math.random2f(0.4, 0.8) => barPan.pan;
-    1 => barPan.pan;
+    // 1 => barPan.pan;
     // e => dac;
 
     if (Math.randomf() > 0.5) {
