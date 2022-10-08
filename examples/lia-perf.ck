@@ -10,7 +10,7 @@ for (int i; i < me.args(); i++) {
 
 // set up latents
 StyleGAN m;
-true => m.headless;
+// true => m.headless;
 m.init(me.dir() + "../../lia_models/Face-Hands_Lia-Coleman.pkl");
 m.rotate(180);
 
@@ -198,7 +198,7 @@ while( true )
     if (chance > 0.25) {
         if (pluckStage == 2) {
             if (chance > 0.9) {
-                spork~ auxPercSeq();
+                // spork~ auxPercSeq();
             }
 
             120::ms => now;
@@ -280,11 +280,17 @@ fun void interpolate() {
     
     while (true) {
 
+        7 => float exaggerate;
+
         while (pos <= 1) {
             scale(0, 1, minPos, maxPos, pos) => float currPos;
 
             if (e1Flag & eLeft.value() != 0.0) {
                 currPos - 1 => currPos;
+
+                if (doubleTime != 1.0) {
+                    exaggerate *=> currPos;
+                }
             }
 
             m.interpolate(intp, left, right, currPos);
@@ -299,7 +305,12 @@ fun void interpolate() {
 
             if (e1Flag && eLeft.value() != 0.0) {
                 currPos - 1 => currPos;
+
+                if (doubleTime != 1.0) {
+                    exaggerate *=> currPos;
+                }
             }
+
             m.interpolate(intp, left, right, currPos);
 
             delta -=> pos;
@@ -342,13 +353,20 @@ fun void manageMidi() {
         while( in.recv( msg ) )
         {
             // print content
-            <<< msg.data1, msg.data2, msg.data3 >>>;
+            // <<< msg.data1, msg.data2, msg.data3 >>>;
 
             if (msg.data2 == 13) { // control range of s
                 scale(0, 127, 0.99, 3.99, msg.data3) => maxOct;
 
-                scale(0, 127, 1.0, 0.4, msg.data3) => maxPos;
-                scale(0, 127, 0.9, 0.0, msg.data3) => minPos;
+                if (pluckStage == 2) {
+                    scale(0, 127, 1.0, 0.4, msg.data3) => maxPos;
+                    scale(0, 127, 0.9, 0.0, msg.data3) => minPos;
+                } else {
+                    scale(0, 127, 1.0, 0.74, msg.data3) => maxPos;
+                    scale(0, 127, 0.9, 0.51, msg.data3) => minPos;
+                }
+
+                // <<< "minpos, maxpos", minPos, maxPos >>>;
             }
 
             if (msg.data2 == 41 && msg.data3 > 0) { // hit the blit env
@@ -372,8 +390,10 @@ fun void manageMidi() {
             }
 
             if (msg.data2 == 77) { // adjust volume of global beat
-                scale(0, 127, 0.0, 1.0, msg.data3) => master.target;
+                scale(0, 127, 0.0, 1.0, msg.data3) => master.target => masterLeft.target => masterRight.target;
                 master.keyOn();
+                masterLeft.keyOn();
+                masterRight.keyOn();
             }
         }
     }
@@ -386,7 +406,7 @@ fun void auxPerc() {
     gverb.chan(0) => eLeft;
     gverb.chan(1) => eRight;
     
-    800 * 4 => lpf.freq;
+    800 * 5 => lpf.freq;
     Math.random2f(0.4, 0.8) => barPan.pan;
     // 1 => barPan.pan;
     // e => dac;
@@ -405,12 +425,12 @@ fun void auxPerc() {
     Math.random2f( 0, 0.2 ) => bar.strikePosition;
     Math.random2f( 0, 1 ) => bar.vibratoGain;
     Math.random2f( 0, 60 ) => bar.vibratoFreq;
-    Math.random2f( 0, 1 ) => bar.volume;
-    Math.random2f( .5, 1 ) => bar.directGain;
+    Math.random2f( 0.5, 1 ) => bar.volume;
+    Math.random2f( .7, 1 ) => bar.directGain;
     // Math.random2f( .3, 0.6 ) => bar.masterGain;
-    Math.random2f( .7, 1.0 ) => bar.masterGain;
+    Math.random2f( .9, 1.0 ) => bar.masterGain;
 
-    0.8 => bar.gain;
+    1.1 => bar.gain;
 
     // set freq
     // scale[Math.random2(0,scale.size()-1)] => int winner;
@@ -431,10 +451,10 @@ fun void auxPerc() {
 
     // 33 + scaleDeg => Std.mtof => bar.freq;
     33 + 36 + currDeg => Std.mtof => bar.freq;
-    <<< "freq", bar.freq() >>>;
+    // <<< "freq", bar.freq() >>>;
     // 20 => bar.freq;
     // go
-    .8 => bar.noteOn;
+    1.0 => bar.noteOn;
 
     // advance time
     .5::second => now;
