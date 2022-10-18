@@ -1,11 +1,13 @@
+TODO: embed video of mirror with caption
+
 # What is GANimator?
 # Installing
 ## Requirements
 - Windows 10/11
 - The latest version of the [ChucK programming language](https://chuck.stanford.edu/)
-- A newish, CUDA-compatible GPU (i.e. NVIDIA 1000-series or later)
+- A newish, CUDA-compatible GPU (i.e. nvidia GTX 1000-series or later). Running GANs is computationally expensive and hardware acceleration on the newer nvidia chips helps a lot.
 ## Installation Instructions
-- go to the releases page and click on the provided link (it will be in the format `ganimator-X.X.X.zip')
+- Go to the Releases page and click on the provided link (it will be in the format `ganimator-X.X.X.zip')
 - download source code zip as well
 - unzip both of these to a known directory
 
