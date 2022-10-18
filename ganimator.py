@@ -199,7 +199,7 @@ async def draw_loop(test, framerate, **kwargs) -> None:
 
             if (currentTime - lastTime >= 1.0):
                 ctime = currentTime - lastTime # time delta in seconds
-                print(f'{1000.0 * ctime/frameCount:.3f} ms/frame ({frameCount/ctime:.1f} fps)')
+                logging.info(f'{1000.0 * ctime/frameCount:.3f} ms/frame ({frameCount/ctime:.1f} fps)')
                 frameCount = 0
                 lastTime = currentTime
 
