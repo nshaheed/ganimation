@@ -43,7 +43,34 @@ the message `Waiting for model load` in the text console. Loading the model and 
 in chuck, as described in [Hello GAN](#hello-gan) and [Example](#examples). For even more info about what you can do,
 check out the documentation below, and look at the examples found in `<downloaded dir>/chuck/examples/`.
 
-## Importing Files in ChucK
+## Setting up ChucK
+Because chuck is weird about how it imports files, adding the GANimator classes to your chuck program is a bit convoluted.
+
+Because chuck adds classes to the VM at runtime via `Machine.add`, if you try to add the GANimator classes from within your chuck
+program, it will complain at compile-time because they haven't been added to the VM namespace yet. In order to make the classes
+available you will need to add them in a separate program that you run before running your main script.
+
+The separate chuck file for imports looks like this:
+
+```
+Machine.add(me.dir() + "latent.ck");
+Machine.add(me.dir() + "model.ck");
+
+# this is only needed if you're using StyleGAN
+Machine.add(me.dir() + "StyleGAN.ck");
+
+// Adding your chuck program will then launch your code.
+// If you want to continue to modify your code/replace the spork, 
+// don't include this line and instead launch the code separately in
+// miniAudicle.
+Machine.add(me.dir() + "mycode.ck"); 
+```
+
+If you're using miniAudicle, add a spork of this file first. It will import all the GANimator classes and add them to the namespace.
+You can then launch your chuck code from here and the chuck VM will be able to compile!
+
+Pay careful attention to where your chuck files are relative to the GANimator ones, and use relative imports when needed. An example of
+this is in [this launch file](examples/basic_launch.ck).
 ## Examples
 ### Hello GAN
 ### Randomization
