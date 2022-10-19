@@ -7,7 +7,7 @@ cwd = os.getcwd()
 ganimator_path = os.path.join(cwd, 'ganimator.py')
 
 # build the exe
-subprocess.call(f'pyinstaller --windowed --noconfirm {ganimator_path}')
+subprocess.call(f'pyinstaller --windowed --noconfirm --add-data *.ck;./chuck/ --add-data examples/*.ck;./chuck/examples/ {ganimator_path}')
 dist_dir = os.path.join(cwd, 'dist', 'ganimator')
 
 # copy the glfw dlls over because the ones that are installed don't work for some reason
