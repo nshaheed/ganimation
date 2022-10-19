@@ -72,6 +72,8 @@ You can then launch your chuck code from here and the chuck VM will be able to c
 Pay careful attention to where your chuck files are relative to the GANimator ones, and use relative imports when needed. An example of
 this is in [this launch file](examples/basic_launch.ck).
 ## Examples
+These examples (and more!) can be found in the `<downloaded dir>/chuck/examples/` directory as well as in this [git repo](/examples/).
+Dig around for ideas and to get a better sense of how to use the tool
 ### Hello GAN
 ### Randomization
 ### Interpolation
