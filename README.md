@@ -7,8 +7,6 @@ GANimator in a live performance of *mirror* by Lia Coleman & Nick Shaheed. Full 
 
 [toc]
 
-TODO: embed video of mirror with caption
-
 # What is GANimator?
 # Installing
 ## Requirements
@@ -117,21 +115,23 @@ Randomly generate new faces to a rhythm (with sound!).
 Model m;
 m.init();
 
-// Model.make("DTD") @=> Model m;
+// Create and draw a latent point
 m.makeLatent() @=> Latent @ l;
 m.draw(l);
 
+// Make sound!
 Blit s => JCRev r => dac;
 .5 => s.gain;
 .05 => r.mix;
 
-// an array
+// Our scale
 [ 0, 2, 4, 7, 9, 11 ] @=> int hi[];
 
 
-// infinite time loop
+// infinite loop
 while( true )
 {
+    // random point in l
     m.face(l);
 
     // frequency
@@ -185,10 +185,25 @@ while (intp < 1.0) {
     framerate => now;
 }
 ```
-### Arithmetic
-### Oscillation
 ## Supported GAN frameworks
-### PGan
-### StyleGAN2 & StyleGAN3
-## Methods
+The currently supported frameworks are StyleGAN2, StyleGAN3, and PGAN. The PGANs available are currently limited to a [few models provided by facebook research](model/model.py#L37-L39), but a StyleGAN model can be loaded from a local file. See the [Methods & Models](#methods--models) section below.
+## Methods & Models
+### Model
+#### init
+#### makeLatent
+#### draw
+#### face
+#### interpolate
+#### sinOsc
+#### add
+#### sub
+#### mul
+#### div
+#### loadLatent
+#### rotate
+### StyleGAN
+### Latent
 ## Backend Options
+### debug
+### framerate
+### test
