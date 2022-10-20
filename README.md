@@ -1,3 +1,10 @@
+
+
+
+https://user-images.githubusercontent.com/6963603/197025085-78981ae8-6fb4-4599-9ad4-a67fcaa05088.mp4
+
+GANimator in a live performance of *mirror* by Lia Coleman & Nick Shaheed. Full video [here](https://vimeo.com/762363875).
+
 [toc]
 
 TODO: embed video of mirror with caption
