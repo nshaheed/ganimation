@@ -147,6 +147,37 @@ while( true )
 }
 ```
 ### Interpolation
+[Video!](https://vimeo.com/700907651/2978db3e39)
+
+A more involved example of interpolation can be found at [interpolate.ck](/examples/interpolate.ck) and [interpolate_launch.ck](/examples/interpolate_launch.ck).
+
+Smoothly interpolate between two latent points. This is the classic GAN effect that you probably know and love (or hate).
+
+```
+// initialize model
+Model m;
+m.init();
+
+// make our latent points. We are interpolating from left to right.
+m.makeLatent() @=> Latent draw;
+m.makeLatent() @=> Latent left;
+m.makeLatent() @=> Latent right;
+
+// draw is the latent point that will be displayed
+m.draw(draw);
+
+0.0 => float intp;
+
+while (intp < 1.0) {
+    (1/24.0)::second => dur framerate; // 24 fps
+    
+    // interpolate by intp between left & right, 
+    // storing interpolate value in draw. 
+    m.interpolate(draw, left, right, intp);
+    0.001 +=> intp;
+    framerate => now;
+}
+```
 ### Arithmetic
 ### Oscillation
 ## Supported GAN frameworks
