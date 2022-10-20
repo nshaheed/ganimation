@@ -75,7 +75,77 @@ this is in [this launch file](examples/basic_launch.ck).
 These examples (and more!) can be found in the `<downloaded dir>/chuck/examples/` directory as well as in this [git repo](/examples/).
 Dig around for ideas and to get a better sense of how to use the tool
 ### Hello GAN
+See [hello_gan.ck](/examples/hello_gan.ck) and [hello_gan_launch.ck](/examples/hello_gan_launch.ck)
+
+Hello GAN! This is the simplest thing you can do 
+in GANimator: declare a model and tell it to display
+an image. 
+
+```
+// Declare our model and initialize it.
+// Because no path to a model is provided,
+// it defaults to a model based off of the
+// celebAHQ-512 dataset.
+Model m;
+m.init();
+
+// Initialize a point in latent space and store it in l
+m.makeLatent() @=> Latent @ l;
+// Draw l in the display window
+m.draw(l);
+
+10::second => now;
+```
 ### Randomization
+
+See [basic.ck](/examples/basic.ck) and [basic_launch.ck](/examples/basic_launch.ck).
+
+Randomly generate new faces to a rhythm (with sound!).
+
+[Video of output](https://vimeo.com/699255291/7ca1271ee2)
+
+```
+
+// Load default celebAHQ-512 model
+Model m;
+m.init();
+
+// Model.make("DTD") @=> Model m;
+m.makeLatent() @=> Latent @ l;
+m.draw(l);
+
+Blit s => JCRev r => dac;
+.5 => s.gain;
+.05 => r.mix;
+
+// an array
+[ 0, 2, 4, 7, 9, 11 ] @=> int hi[];
+
+
+// infinite time loop
+while( true )
+{
+    m.face(l);
+
+    // frequency
+    Std.mtof( 33 + Math.random2(0,3) * 12 +
+        hi[Math.random2(0,hi.size()-1)] ) => s.freq;
+
+    // harmonics
+    Math.random2( 1, 5 ) => s.harmonics;
+    
+    // Randomize the rhythm
+    Math.randomf() => float chance;
+    if (chance > 0.95) {
+        360::ms => now;
+    }
+    else if (chance > 0.25) {
+        120::ms => now;
+    } else {
+        240::ms => now;
+    }
+}
+```
 ### Interpolation
 ### Arithmetic
 ### Oscillation
