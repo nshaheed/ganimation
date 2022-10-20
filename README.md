@@ -189,11 +189,37 @@ while (intp < 1.0) {
 The currently supported frameworks are StyleGAN2, StyleGAN3, and PGAN. The PGANs available are currently limited to a [few models provided by facebook research](model/model.py#L37-L39), but a StyleGAN model can be loaded from a local file. See the [Methods & Models](#methods--models) section below.
 ## Methods & Models
 ### Model
+This is parent class `Model` and all of it's class methods. The parent class `Model` supports [these](https://github.com/facebookresearch/pytorch_GAN_zoo#load-a-pretrained-model-with-torchhub) pretrained PGAN models. See [StyleGAN](#stylegan) for differences between the `Model` and `StyleGAN` classes.
+
 #### init
+`fun void init()`
+
+Loads the default model (which is `celebAHQ-512`).
+
+`fun void init(string model_name)`
+
+Loads any of [these](https://github.com/facebookresearch/pytorch_GAN_zoo#load-a-pretrained-model-with-torchhub) models.
+
+StyleGAN allows for loading local model files, see [below](#stylegan) for more information.
 #### makeLatent
+`fun Latent@ makeLatent()`
+
+Create a new Latent associated with the `Model`. What is returned is a reference to a randomized point in latent space.
 #### draw
+`fun void draw(Latent l)`
+
+Specify which latent `l` to draw to the screen. As `l` is modified the screen will be updated. This is how animation happens.
 #### face
+`fun void face(Latent l)`
+
+Set `l` to a random point in space. This should really be called `random`, but that hasn't been fixed yet.
 #### interpolate
+`void interpolate(Latent l, Latent left, Latent right, float scale)`
+
+Linear interpolation between two points in latent space.
+
+`left` and `right` are the two points to interpolate between. `scale` is the point on the interpolation to calculate, where `0` is left, `1` is right, `0.5` is halfway between `left` and `right`, and values outside of `0-1` are extrapolations. The caculated result is stored in `l`.
+
 #### sinOsc
 #### add
 #### sub
