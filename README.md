@@ -5,8 +5,6 @@ https://user-images.githubusercontent.com/6963603/197025085-78981ae8-6fb4-4599-9
 
 GANimator in a live performance of *mirror* by Lia Coleman & Nick Shaheed. Full video [here](https://vimeo.com/762363875).
 
-[toc]
-
 # What is GANimator?
 # Installing
 ## Requirements
@@ -18,6 +16,8 @@ GANimator in a live performance of *mirror* by Lia Coleman & Nick Shaheed. Full 
 - Unzip this a known location.
 
 ## Installing for Development
+These instructions are still a work in progress!
+
 - make sure conda/anaconda is installed
 - install cuda toolkit
 - make a new conda environment
