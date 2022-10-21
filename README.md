@@ -221,12 +221,44 @@ Linear interpolation between two points in latent space.
 `left` and `right` are the two points to interpolate between. `scale` is the point on the interpolation to calculate, where `0` is left, `1` is right, `0.5` is halfway between `left` and `right`, and values outside of `0-1` are extrapolations. The caculated result is stored in `l`.
 
 #### sinOsc
+`fun void sinOsc(Latent source, Latent point1, float phase, float amp)`
+
+Oscillated around a point with controllable `phase` and `amp`litude.
+
+The oscillation is calculated around `point1`, and the result is stored in `source`.
+
+See [examples/osc.ck](#examples/osc.ck)
 #### add
+`fun void add(Latent source, Latent point1, Latent point2)`
+
+Add `point1` and `point2`, storing the sum in `source`.
 #### sub
+`fun void sub(Latent source, Latent point1, Latent point2)`
+
+Subtract `point2` from `point1`, storing the difference in `source`.
+
 #### mul
+`fun void mul(Latent source, Latent point1, float scalar)`
+
+Multiply `point1` by a `scalar`, storing the product in `source`.
+
 #### div
+`fun void div(Latent source, Latent point1, float scalar)`
+
+Diving `point1` by a `scalar`, storing the quotient in `source`.
+
 #### loadLatent
+`fun Latent@ loadLatent(string filepath)`
+
+Load a latent point stored in a file. This should be a `.npy` file.
+#### saveLatent
+`fun void saveLatent(Latent l, string filepath)`
+
+Save latent point `l` at `filepath`. This should be a `.npy` file.
 #### rotate
+`fun void rotate(int angle)`
+
+Rotate the outputed image. `angle` can either be `0`, `90`, `180`, or `270`.
 ### StyleGAN
 ### Latent
 ## Backend Options
