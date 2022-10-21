@@ -227,7 +227,7 @@ Oscillated around a point with controllable `phase` and `amp`litude.
 
 The oscillation is calculated around `point1`, and the result is stored in `source`.
 
-See [examples/osc.ck](#examples/osc.ck)
+See [examples/osc.ck](examples/osc.ck)
 #### add
 `fun void add(Latent source, Latent point1, Latent point2)`
 
@@ -260,8 +260,16 @@ Save latent point `l` at `filepath`. This should be a `.npy` file.
 
 Rotate the outputed image. `angle` can either be `0`, `90`, `180`, or `270`.
 ### StyleGAN
+`StyleGAN` supports the same methods as `Model`. The only difference is when calling `init`, you provide a filepath to a StyleGAN2-ADA or StyleGAN3 model.
+i.e. `styleGAN.init("dog_pic_gan.pkl")`
+
+See [examples/stylegan_basic.ck](examples/stylegan_basic.ck) for a more detailed example.
 ### Latent
+A `Latent` is a single point in latent space. This point will be the input to your provided GAN, where it will deterministically output an image. The manipulation of latent points over time is how GANimator creates animation.
 ## Backend Options
 ### debug
+Enables debug-level logging.
 ### framerate
+Displays the rendered framerate of the animation
 ### test
+Recieve OSC messages from chuck, but do not render an image. This is faster/uses less power.
