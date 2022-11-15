@@ -3,9 +3,10 @@
 
 https://user-images.githubusercontent.com/6963603/197025085-78981ae8-6fb4-4599-9ad4-a67fcaa05088.mp4
 
-GANimator in a live performance of *mirror* by Lia Coleman & Nick Shaheed. Full video [here](https://vimeo.com/762363875).
+GANimator being used in a live performance of *mirror* by Lia Coleman & Nick Shaheed. Full video [here](https://vimeo.com/762363875).
 
 # What is GANimator?
+GANimator is a tool for ChucK to create live, interactive animation using generative adversarial networks (GANs).
 # Installing
 ## Requirements
 - Windows 10/11
