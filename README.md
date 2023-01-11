@@ -25,7 +25,9 @@ These instructions are still a work in progress!
 - activate conda environment
 - git clone
 - cd to dir
-- conda call to install pip environment
+- conda call to install pip environment (not implemented)
+- make sure to install ninja, python won't complain if it isn't there it needs it
+- make sure visual studio is install with the c++ desktop development addon
 - run `python ganimator.py`
 
 ### installing PyOpenGL (for windows at least)
