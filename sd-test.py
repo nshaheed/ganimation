@@ -3,7 +3,7 @@ from tqdm.auto import tqdm
 
 import torch
 from torch import autocast
-from torchvision import transforms as tfms
+# from torchvision import transforms as tfms
 
 from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import StableDiffusionPipeline
@@ -32,7 +32,7 @@ stable_diff_pipe = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffu
 
 stable_diff_pipe.to(torch_device)
 
-prompt = ['A monkey dancing in a club']   # Change this and Enjoy !!
+prompt = ['A cozy campfire']   # Change this and Enjoy !!
 guidance_scale = 12.5
 
 # Change the seed parameter to create an original image each time.
@@ -40,9 +40,12 @@ generator = torch.manual_seed(69)    # Nice !
 
 # Loop
 with autocast("cuda"):
-    image = stable_diff_pipe(prompt, guidance_scale = guidance_scale, num_inference_steps = 1).images[0]
+    image = stable_diff_pipe(prompt, guidance_scale = guidance_scale, num_inference_steps = 12).images[0]
 
-breakpoint()
+# breakpoint()
 print(f'{type(image)}')
 
+image.show()
+
 pix = np.array(image)
+breakpoint()

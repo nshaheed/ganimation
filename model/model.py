@@ -68,7 +68,7 @@ class Model:
 
         # make sure each id is unique
         self.id_counter += 1
-        logging.debug(f'latent shape: {self.latent[id].shape}')
+        # logging.debug(f'latent shape: {self.latent[id].shape}')
 
         return id
 
@@ -213,7 +213,7 @@ class StableDiffusion(Model):
 
     model = None
 
-    rotate = 0
+    rotate = 270
 
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
@@ -231,10 +231,11 @@ class StableDiffusion(Model):
         pass
 
     def make_image(self, id):
-        prompt = ['A cozy campfire'] 
+        prompt = ['A cozy campfire at night with no people'] 
         guidance_scale = 12.5
         with torch.autocast("cuda"):
-            image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 1).images[0]
+            image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 12).images[0]
 
-        pix = np.array(image)
+        # PIL stores colors between 0-255, need to scale to 0-1 for ganimator
+        pix = np.array(image) / 255
         return pix
