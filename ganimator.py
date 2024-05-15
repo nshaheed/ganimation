@@ -50,7 +50,10 @@ def load(addr: str, args, model_name: str) -> None:
             if model_name == '':
                 curr_model.load()
             else:
-                curr_model.load(model_name)            
+                curr_model.load(model_name)
+        case 'StableDiffusion':
+            curr_model = model.model.StableDiffusion()
+            curr_model.load()        
         case _:
             logging.error('model type not found')
             
@@ -133,12 +136,15 @@ async def draw_loop(test, framerate, **kwargs) -> None:
         await asyncio.sleep(1.0/24)
     logging.info("Model loaded!")
 
+    breakpoint()
+
     # stall the render loop if in test mode
     while test:
         await asyncio.sleep(1.0)
 
     size = curr_model.size()
-    window = glfw.create_window(size[0], size[1], "My OpenGL window", None, None)
+    # window = glfw.create_window(size[0], size[1], "My OpenGL window", None, None)
+    window = glfw.create_window(512, 512, "GANimator", None, None)
 
     if not window:
         glfw.terminate()

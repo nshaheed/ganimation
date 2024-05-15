@@ -11,6 +11,13 @@ from viz import renderer
 import sys
 import legacy
 
+# Stable Diffusion Specific
+from transformers import CLIPTextModel, CLIPTokenizer
+from diffusers import StableDiffusionPipeline
+
+from PIL import Image
+
+
 ## TODO abstract this to allow for subclasses for different models (stylegan, pgan, w/e)
 class Model:
     model = None
@@ -201,3 +208,33 @@ class StyleGAN3(Model):
         result = np.asarray(result)
 
         return result
+
+class StableDiffusion(Model):
+
+    model = None
+
+    rotate = 0
+
+    def __init__(self):
+        self.use_gpu = True if torch.cuda.is_available() else False
+        self.latent = {}
+        self.setDevice()
+
+    def load(self, model_address=''):
+        self.model = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffusion-v1-4')
+        self.model.to(self.device)
+
+    def size(self) -> (int, int):
+        return (512,512) # this probably isn't guaranteed, will deal with later
+
+    def generate_noise(self):
+        pass
+
+    def make_image(self, id):
+        prompt = ['A cozy campfire'] 
+        guidance_scale = 12.5
+        with torch.autocast("cuda"):
+            image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 1).images[0]
+
+        pix = np.array(image)
+        return pix
