@@ -231,7 +231,7 @@ class StableDiffusion(Model):
         pass
 
     def make_image(self, id):
-        prompt = ['A cozy campfire at night with no people'] 
+        prompt = ['A cozy campfire at night'] 
         guidance_scale = 12.5
         with torch.autocast("cuda"):
             image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 12).images[0]
