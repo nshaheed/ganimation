@@ -136,8 +136,6 @@ async def draw_loop(test, framerate, **kwargs) -> None:
         await asyncio.sleep(1.0/24)
     logging.info("Model loaded!")
 
-    breakpoint()
-
     # stall the render loop if in test mode
     while test:
         await asyncio.sleep(1.0)

@@ -12,3 +12,13 @@
 /diagrams/
 *.npy
 *.zip
+*.wav
+*.mp4
+*.asd
+*.mov
+*.blend
+*.blend1
+*.ini
+*.ico
+*.cfg
+*.als
