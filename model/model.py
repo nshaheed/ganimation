@@ -221,20 +221,31 @@ class StableDiffusion(Model):
         self.setDevice()
 
     def load(self, model_address=''):
-        self.model = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffusion-v1-4')
+        # breakpoint()
+        # self.model = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffusion-v1-4')
+        self.model = StableDiffusionPipeline.from_pretrained(
+            'CompVis/stable-diffusion-v1-4', 
+            variant="fp16", torch_dtype=torch.float16, use_safetensors=True,
+            safety_checker=None,
+            )
         self.model.to(self.device)
 
     def size(self) -> (int, int):
         return (512,512) # this probably isn't guaranteed, will deal with later
 
     def generate_noise(self):
-        pass
+        noise = torch.randn(1, self.model.unet.config.in_channels, 64, 64).to(self.device)
+        return noise
 
     def make_image(self, id):
         prompt = ['A cozy campfire at night'] 
         guidance_scale = 12.5
+
+        curr_latent = self.latent[id]
+        
         with torch.autocast("cuda"):
-            image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 12).images[0]
+            image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 12, 
+            latents=curr_latent, width=256, height=256).images[0]
 
         # PIL stores colors between 0-255, need to scale to 0-1 for ganimator
         pix = np.array(image) / 255

@@ -1,8 +1,6 @@
 // Randomly generate with stylegan to the beat of blit
 
 StableDiffusion m;
-m.init();
-// m.init(me.dir() + "../local_models/lia1.pkl");
 
 <<< "model initialized" >>>;
 
