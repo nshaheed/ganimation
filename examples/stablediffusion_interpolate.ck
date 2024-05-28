@@ -21,7 +21,7 @@ Blit s => JCRev r => dac;
 
 
 0 => float intp;
-0.1 => float speed;
+0.01 => float speed;
 
 //eon => now;
 //30::second => now; // loading...

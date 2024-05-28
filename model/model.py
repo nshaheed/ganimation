@@ -26,6 +26,7 @@ class Model:
 
     id_counter = 0
     latent = None
+    latent_draw = None
 
     rotate = 0
 
@@ -34,6 +35,7 @@ class Model:
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
         self.latent = {}
+        self.latent_draw = {}
         self.setDevice()
 
     def setDevice(self) -> None:
@@ -62,9 +64,9 @@ class Model:
         id = self.id_counter
 
         if arr is not None:
-            self.latent[id] = arr
+            self.latent[id] = self.latent_draw[id] = arr
         else:
-            self.latent[id] = self.generate_noise()
+            self.latent[id] = self.latent_draw[id] = self.generate_noise()
 
         # make sure each id is unique
         self.id_counter += 1
@@ -74,7 +76,7 @@ class Model:
 
     def replace_latent(self, id: int, source_id=None) -> None:
         """ Replace latent at id with a new random latent. """
-        self.latent[id] = self.generate_noise()
+        self.latent[id] = self.latent_draw[id] = self.generate_noise()
 
         # TODO: add case for when source_id is not None
 
@@ -92,7 +94,8 @@ class Model:
 
     def interpolate(self, source_id: int, left_id: int, right_id: int, interp: float) -> None:
         """ Linear interpolation between left and right latents. """
-        self.latent[source_id] = self.latent[left_id] * interp + self.latent[right_id] * (1.0 - interp)
+        self.latent[source_id] = self.latent_draw[source_id] = self.latent[left_id] * interp + self.latent[right_id] * (1.0 - interp)
+        # print(f'{self.latent[source_id]=}')
 
     def set_draw(self, source_id: int) -> None:
         """ Set which latent from the model to draw. """
@@ -101,19 +104,19 @@ class Model:
     def sin_osc(self, source_id: int, point1_id: int, phase: float = 0, amp: float = 1):
         n = self.latent[point1_id]
         n = amp * math.cos(phase) * n
-        self.latent[source_id] = n
+        self.latent[source_id] = self.latent_draw[id] = n
 
     def add(self, source_id: int, point1_id: int, point2_id: int):
-        self.latent[source_id] = self.latent[point1_id] + self.latent[point2_id]
+        self.latent[source_id] = self.latent_draw[id] = self.latent[point1_id] + self.latent[point2_id]
 
     def sub(self, source_id: int, point1_id: int, point2_id: int):
-        self.latent[source_id] = self.latent[point1_id] - self.latent[point2_id]
+        self.latent[source_id] = self.latent_draw[id] = self.latent[point1_id] - self.latent[point2_id]
 
     def mul(self, source_id: int, point1_id: int, scalar: float):
-        self.latent[source_id] = scalar * self.latent[point1_id]
+        self.latent[source_id] = self.latent_draw[id] = scalar * self.latent[point1_id]
 
     def div(self, source_id: int, point1_id: int, scalar: float):
-        self.latent[source_id] = self.latent[point1_id] / scalar
+        self.latent[source_id] = self.latent_draw[id] = self.latent[point1_id] / scalar
 
     # save latent to file
     def save_latent(self, source_id: int, filepath: str):
@@ -212,12 +215,14 @@ class StyleGAN3(Model):
 class StableDiffusion(Model):
 
     model = None
+    prompt_embedding = None
 
     rotate = 270
 
     def __init__(self):
         self.use_gpu = True if torch.cuda.is_available() else False
         self.latent = {}
+        self.latent_draw = {}
         self.setDevice()
 
     def load(self, model_address=''):
@@ -229,6 +234,17 @@ class StableDiffusion(Model):
             safety_checker=None,
             )
         self.model.to(self.device)
+
+        # Tokenize the prompt
+        tokens = self.model.tokenizer(
+            'A cozy campfire at night',
+            return_tensors='pt',  # Corrected the typo from 'returns_tensors' to 'return_tensors'
+            truncation=False
+        ).to(self.device)
+
+        # Create the prompt embedding
+        with torch.no_grad():
+            self.prompt_embedding = self.model.text_encoder(**tokens).last_hidden_state.to(self.device)
 
     def size(self) -> (int, int):
         return (512,512) # this probably isn't guaranteed, will deal with later
@@ -244,7 +260,7 @@ class StableDiffusion(Model):
         curr_latent = self.latent[id]
         
         with torch.autocast("cuda"):
-            image = self.model(prompt, guidance_scale = guidance_scale, num_inference_steps = 12, 
+            image = self.model(prompt_embeds=self.prompt_embedding, guidance_scale = guidance_scale, num_inference_steps = 12, 
             latents=curr_latent, width=256, height=256).images[0]
 
         # PIL stores colors between 0-255, need to scale to 0-1 for ganimator

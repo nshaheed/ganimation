@@ -210,9 +210,12 @@ async def draw_loop(test, framerate, **kwargs) -> None:
         # temp fix until proper latent selection is added
         if curr_model.draw is None:
             continue
+        if curr_model.latent_draw.get(curr_model.draw, None) is None:
+            continue
         with torch.no_grad():
             id = curr_model.draw
             generated_image = curr_model.make_image(id)
+            curr_model.latent_draw.pop(id, None)
 
         await asyncio.sleep(0)
 

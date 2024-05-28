@@ -20,10 +20,14 @@ Blit s => JCRev r => dac;
 [ 0, 2, 4, 7, 9, 11 ] @=> int hi[];
 
 -1.0 => float prevFreq;
+
+
+0.1 => float increment;
+0 => float intp;
 // infinite time loop
 while( true )
 {
-    m.face(draw);
+    // m.face(draw);
 
     // frequency
     while (s.freq() == prevFreq) {
@@ -37,15 +41,19 @@ while( true )
 
     Math.randomf() => float chance;
     if (chance > 0.95) {
-        updateSide();
-        interpolate_step(5200::ms, s.harmonics());
+        // updateSide();
+        // interpolate_step(5200::ms, s.harmonics());
     } else if (chance > 0.25) {
         120::ms => now;
     } else {
-        updateSide();
-        interpolate_step(2400::ms, s.harmonics());
+        // updateSide();
+        // interpolate_step(2400::ms, s.harmonics());
         // (2400-180)::ms => now;
     }
+
+    m.interpolate(draw, left, right, intp);
+    increment +=> intp;
+    5::second => now;
 }
 
 fun void updateSide() {
